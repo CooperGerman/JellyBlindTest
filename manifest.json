@@ -1,0 +1,20 @@
+[
+  {
+    "category": "General",
+    "guid": "dcfb6e4c-e418-4bca-9a4a-f960e991ad00",
+    "name": "JellyBlindTest",
+    "description": "Play a short random song preview and guess the title.",
+    "owner": "self-hosted",
+    "overview": "Adds a five-round blind test game using songs from the signed-in user's Jellyfin library.",
+    "versions": [
+      {
+        "version": "0.1.0.0",
+        "changelog": "- Add a five-round random blind test with five-second song previews and typed title answers.",
+        "targetAbi": "12.1.0.0",
+        "sourceUrl": "https://raw.githubusercontent.com/CooperGerman/JellyBlindTest/main/plugin/JellyBlindTest.zip",
+        "checksum": "1bc870e9ba3b3c85a5238009d3a27481",
+        "timestamp": "2026-10-14T19:08:04Z"
+      }
+    ]
+  }
+]
