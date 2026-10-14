@@ -1,0 +1,14 @@
+name: "JellyBlindTest"
+guid: "dcfb6e4c-e418-4bca-9a4a-f960e991ad00"
+version: "0.1.0.0"
+targetAbi: "12.1.0.0"
+framework: "net10.0"
+owner: "self-hosted"
+artifacts:
+  - "JellyBlindTest.dll"
+overview: "Play short random previews of your library songs and guess the title."
+description: >
+  Adds a five-round blind test game to the Jellyfin Web main menu.
+category: "General"
+changelog: >
+  Add a random five-second song preview game with typed title answers.

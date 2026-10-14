@@ -1,0 +1,15 @@
+{
+  "guid": "dcfb6e4c-e418-4bca-9a4a-f960e991ad00",
+  "name": "JellyBlindTest",
+  "description": "Play a short random song preview and guess the title.",
+  "overview": "Adds a five-round blind test game using songs from the signed-in user's Jellyfin library.",
+  "owner": "self-hosted",
+  "category": "General",
+  "version": "0.1.0.0",
+  "targetAbi": "12.1.0.0",
+  "framework": "net10.0",
+  "assemblies": ["JellyBlindTest.dll"],
+  "status": "Active",
+  "autoUpdate": false,
+  "imagePath": ""
+}

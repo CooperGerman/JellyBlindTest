@@ -1,0 +1,537 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Blind Test</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --blind-bg: #10171b;
+      --blind-panel: #1b252a;
+      --blind-line: #35464b;
+      --blind-text: #f4f5f3;
+      --blind-muted: #a9b8b8;
+      --blind-accent: #55d6be;
+      --blind-warm: #ffd166;
+      --blind-error: #ff8178;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--blind-text);
+      background:
+        radial-gradient(ellipse at 80% 0%, rgba(62, 112, 107, .23), transparent 45%),
+        linear-gradient(145deg, #10171b 0%, #152126 55%, #25201b 100%);
+      font-family: system-ui, sans-serif;
+    }
+
+    .blind-shell {
+      width: min(860px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 38px 0 56px;
+    }
+
+    .blind-heading {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 20px;
+      padding-bottom: 22px;
+      border-bottom: 1px solid var(--blind-line);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 32px;
+      font-weight: 700;
+    }
+
+    .blind-kicker {
+      margin: 0 0 6px;
+      color: var(--blind-accent);
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .blind-score {
+      min-width: 100px;
+      padding: 10px 14px;
+      border: 1px solid var(--blind-line);
+      border-radius: 6px;
+      color: var(--blind-warm);
+      text-align: center;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .blind-board {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 190px;
+      gap: 24px;
+      margin-top: 28px;
+      align-items: start;
+    }
+
+    .blind-main { min-width: 0; }
+
+    .blind-stage {
+      display: grid;
+      min-height: 250px;
+      place-items: center;
+      padding: 32px;
+      border: 1px solid var(--blind-line);
+      border-radius: 8px;
+      background:
+        linear-gradient(135deg, rgba(85, 214, 190, .08), transparent 45%),
+        repeating-linear-gradient(135deg, rgba(255,255,255,.018) 0 1px, transparent 1px 14px),
+        var(--blind-panel);
+      text-align: center;
+    }
+
+    .blind-stage-content { width: min(100%, 460px); }
+
+    .blind-stage-mark {
+      display: grid;
+      width: 72px;
+      aspect-ratio: 1;
+      margin: 0 auto 18px;
+      place-items: center;
+      border: 1px solid rgba(85, 214, 190, .45);
+      border-radius: 50%;
+      color: var(--blind-accent);
+      font-size: 30px;
+    }
+
+    .blind-stage h2 {
+      margin: 0 0 8px;
+      font-size: 23px;
+    }
+
+    .blind-stage p {
+      margin: 0;
+      color: var(--blind-muted);
+      line-height: 1.5;
+    }
+
+    .blind-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .blind-button {
+      display: inline-flex;
+      min-height: 44px;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px 16px;
+      border: 1px solid var(--blind-line);
+      border-radius: 5px;
+      color: var(--blind-text);
+      background: #243238;
+      font: inherit;
+      font-weight: 650;
+      cursor: pointer;
+    }
+
+    .blind-button.primary {
+      border-color: var(--blind-accent);
+      color: #0d1b1a;
+      background: var(--blind-accent);
+    }
+
+    .blind-button:disabled { cursor: default; opacity: .55; }
+    .blind-button[hidden] { display: none; }
+
+    .blind-answer { margin-top: 25px; }
+
+    .blind-answer label {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--blind-muted);
+      font-size: 14px;
+    }
+
+    .blind-answer-row {
+      display: flex;
+      gap: 9px;
+    }
+
+    .blind-answer input {
+      width: 100%;
+      min-width: 0;
+      min-height: 48px;
+      padding: 11px 13px;
+      border: 1px solid var(--blind-line);
+      border-radius: 5px;
+      outline: none;
+      color: var(--blind-text);
+      background: #121a1e;
+      font: inherit;
+    }
+
+    .blind-answer input:focus { border-color: var(--blind-accent); }
+    .blind-answer input:disabled { opacity: .7; }
+
+    .blind-result {
+      min-height: 28px;
+      margin-top: 12px;
+      color: var(--blind-muted);
+      line-height: 1.5;
+    }
+
+    .blind-result.correct { color: var(--blind-accent); }
+    .blind-result.incorrect { color: var(--blind-warm); }
+    .blind-result.error { color: var(--blind-error); }
+
+    .blind-rail {
+      padding: 18px;
+      border-top: 3px solid var(--blind-warm);
+      background: rgba(16, 23, 27, .7);
+    }
+
+    .blind-rail h2 {
+      margin: 0 0 16px;
+      color: var(--blind-warm);
+      font-size: 15px;
+      text-transform: uppercase;
+    }
+
+    .blind-rounds {
+      display: grid;
+      gap: 8px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .blind-rounds li {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(169, 184, 184, .17);
+      color: var(--blind-muted);
+      font-size: 13px;
+    }
+
+    .blind-rounds li.current { color: var(--blind-text); }
+    .blind-rounds li.done { color: var(--blind-accent); }
+
+    .blind-footnote {
+      margin: 14px 0 0;
+      color: var(--blind-muted);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    @media (max-width: 640px) {
+      .blind-shell { padding-top: 24px; }
+      .blind-heading { align-items: start; }
+      .blind-board { grid-template-columns: 1fr; }
+      .blind-rail { order: -1; }
+      .blind-rounds { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+      .blind-rounds li { display: block; border-bottom: 0; text-align: center; }
+      .blind-rounds li span { display: block; }
+      .blind-stage { min-height: 220px; padding: 24px 16px; }
+      .blind-answer-row { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <main class="blind-shell">
+    <header class="blind-heading">
+      <div>
+        <p class="blind-kicker">Jellyfin music game</p>
+        <h1>Blind Test</h1>
+      </div>
+      <div class="blind-score" aria-live="polite">Score <span id="score">0</span>/5</div>
+    </header>
+
+    <div class="blind-board">
+      <section class="blind-main" aria-label="Blind test game">
+        <div class="blind-stage" aria-live="polite">
+          <div class="blind-stage-content">
+            <div class="blind-stage-mark" aria-hidden="true">♪</div>
+            <h2 id="stage-title">Ready when you are</h2>
+            <p id="stage-copy">Five random songs. Five seconds per clip. Type the title you hear.</p>
+          </div>
+        </div>
+
+        <div class="blind-actions">
+          <button class="blind-button primary" id="start-button" type="button">Start test</button>
+          <button class="blind-button primary" id="play-button" type="button" hidden>Play 5-second clip</button>
+          <button class="blind-button" id="next-button" type="button" hidden>Next track</button>
+        </div>
+
+        <form class="blind-answer" id="answer-form" hidden>
+          <label for="answer-input">What song is this?</label>
+          <div class="blind-answer-row">
+            <input id="answer-input" name="answer" type="text" autocomplete="off" placeholder="Type the song title" disabled>
+            <button class="blind-button" id="submit-button" type="submit" disabled>Check answer</button>
+          </div>
+        </form>
+        <p class="blind-result" id="result" role="status" aria-live="polite"></p>
+        <audio id="audio" preload="none"></audio>
+      </section>
+
+      <aside class="blind-rail" aria-label="Game progress">
+        <h2 id="round-heading">Your set</h2>
+        <ol class="blind-rounds" id="round-list">
+          <li><span>01</span><span>Waiting</span></li>
+          <li><span>02</span><span>Waiting</span></li>
+          <li><span>03</span><span>Waiting</span></li>
+          <li><span>04</span><span>Waiting</span></li>
+          <li><span>05</span><span>Waiting</span></li>
+        </ol>
+        <p class="blind-footnote">Only songs available to your Jellyfin user are included.</p>
+      </aside>
+    </div>
+  </main>
+
+  <script>
+    (function () {
+      'use strict';
+
+      const TOTAL_ROUNDS = 5;
+      const PREVIEW_SECONDS = 5;
+      const MAX_PICK_ATTEMPTS = 12;
+      const STUB_TAG = 'mdiscover-stub';
+      const api = window.ApiClient;
+      const audio = document.getElementById('audio');
+      const startButton = document.getElementById('start-button');
+      const playButton = document.getElementById('play-button');
+      const nextButton = document.getElementById('next-button');
+      const answerForm = document.getElementById('answer-form');
+      const answerInput = document.getElementById('answer-input');
+      const submitButton = document.getElementById('submit-button');
+      const stageTitle = document.getElementById('stage-title');
+      const stageCopy = document.getElementById('stage-copy');
+      const result = document.getElementById('result');
+      const scoreLabel = document.getElementById('score');
+      const roundHeading = document.getElementById('round-heading');
+      const roundList = document.getElementById('round-list');
+
+      let currentTrack = null;
+      let round = 0;
+      let score = 0;
+      let submitted = false;
+      let requestInProgress = false;
+      let timeoutId = 0;
+      let playId = 0;
+      let totalCount = null;
+      const usedIds = new Set();
+
+      function setResult(message, tone) {
+        result.textContent = message;
+        result.className = `blind-result${tone ? ` ${tone}` : ''}`;
+      }
+
+      function normalizeAnswer(value) {
+        return String(value ?? '')
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .toLocaleLowerCase()
+          .replace(/[^\p{L}\p{N}]+/gu, ' ')
+          .trim();
+      }
+
+      function updateRoundList() {
+        [...roundList.children].forEach((item, index) => {
+          item.classList.toggle('current', index === round - 1 && !submitted);
+          item.classList.toggle('done', index < round - (submitted ? 0 : 1));
+          const state = item.children[1];
+          if (index < round - 1 || (index === round - 1 && submitted)) {
+            state.textContent = 'Done';
+          } else if (index === round - 1) {
+            state.textContent = 'Playing';
+          } else {
+            state.textContent = 'Waiting';
+          }
+        });
+        roundHeading.textContent = round > 0 && round <= TOTAL_ROUNDS
+          ? `Round ${round} of ${TOTAL_ROUNDS}`
+          : 'Your set';
+      }
+
+      function stopPreview() {
+        window.clearTimeout(timeoutId);
+        audio.pause();
+        try { audio.currentTime = 0; } catch (_) { /* Metadata may not be ready. */ }
+        playButton.textContent = 'Replay 5-second clip';
+      }
+
+      function finishGame() {
+        stopPreview();
+        currentTrack = null;
+        stageTitle.textContent = 'Set complete';
+        stageCopy.textContent = `You scored ${score} out of ${TOTAL_ROUNDS}. Ready for another set?`;
+        answerForm.hidden = true;
+        playButton.hidden = true;
+        nextButton.hidden = true;
+        startButton.hidden = false;
+        startButton.textContent = 'Play again';
+        roundHeading.textContent = 'Final score';
+        setResult('');
+      }
+
+      async function chooseRandomTrack() {
+        const userId = api.getCurrentUserId();
+        const baseQuery = {
+          IncludeItemTypes: 'Audio',
+          Recursive: true,
+          Limit: 1,
+          Fields: 'Tags',
+        };
+
+        if (totalCount === null) {
+          const countResponse = await api.getItems(userId, {
+            ...baseQuery,
+            EnableTotalRecordCount: true,
+          });
+          totalCount = Number(countResponse?.TotalRecordCount ?? 0);
+        }
+
+        if (totalCount < 1) throw new Error('No songs are available in your Jellyfin library.');
+
+        for (let attempt = 0; attempt < MAX_PICK_ATTEMPTS; attempt++) {
+          const startIndex = Math.floor(Math.random() * totalCount);
+          const response = await api.getItems(userId, {
+            ...baseQuery,
+            EnableTotalRecordCount: false,
+            StartIndex: startIndex,
+          });
+          const item = response?.Items?.[0];
+          if (!item?.Id || usedIds.has(item.Id)) continue;
+          if ((item.Tags ?? []).includes(STUB_TAG)) continue;
+          usedIds.add(item.Id);
+          return item;
+        }
+
+        throw new Error('Could not find another unused song. Try starting a new set.');
+      }
+
+      async function loadRound() {
+        if (requestInProgress) return;
+        requestInProgress = true;
+        stopPreview();
+        submitted = false;
+        currentTrack = null;
+        startButton.hidden = true;
+        playButton.hidden = true;
+        nextButton.hidden = true;
+        answerForm.hidden = true;
+        setResult('Finding a random song…');
+        stageTitle.textContent = 'Picking a song';
+        stageCopy.textContent = 'One moment.';
+
+        try {
+          currentTrack = await chooseRandomTrack();
+          round++;
+          playButton.hidden = false;
+          answerForm.hidden = false;
+          answerInput.disabled = false;
+          submitButton.disabled = false;
+          answerInput.value = '';
+          answerInput.focus();
+          stageTitle.textContent = 'Listen closely';
+          stageCopy.textContent = 'Play the clip, then type the song title.';
+          setResult('');
+          updateRoundList();
+        } catch (error) {
+          stageTitle.textContent = 'Could not start this round';
+          stageCopy.textContent = error?.message ?? 'The song library could not be read.';
+          startButton.hidden = false;
+          startButton.textContent = round === 0 ? 'Try again' : 'Start a new set';
+          setResult('Check that this user has access to music in Jellyfin.', 'error');
+        } finally {
+          requestInProgress = false;
+        }
+      }
+
+      async function playPreview() {
+        if (!currentTrack) return;
+        stopPreview();
+        const thisPlayId = ++playId;
+        const streamUrl = api.getUrl(`Audio/${encodeURIComponent(currentTrack.Id)}/stream`, {
+          api_key: api.accessToken(),
+          static: true,
+        });
+        audio.src = streamUrl;
+        try {
+          await audio.play();
+          if (thisPlayId !== playId) return;
+          playButton.textContent = 'Playing…';
+          timeoutId = window.setTimeout(() => {
+            if (thisPlayId !== playId) return;
+            stopPreview();
+          }, PREVIEW_SECONDS * 1000);
+        } catch (error) {
+          setResult('Playback failed. Try playing the clip again.', 'error');
+          playButton.textContent = 'Play 5-second clip';
+        }
+      }
+
+      function submitAnswer(event) {
+        event.preventDefault();
+        if (!currentTrack || submitted) return;
+        const guess = normalizeAnswer(answerInput.value);
+        if (!guess) {
+          setResult('Type a title or choose to reveal the answer.', 'error');
+          answerInput.focus();
+          return;
+        }
+
+        submitted = true;
+        stopPreview();
+        answerInput.disabled = true;
+        submitButton.disabled = true;
+        const correct = guess === normalizeAnswer(currentTrack.Name);
+        if (correct) score++;
+        scoreLabel.textContent = String(score);
+
+        const artist = currentTrack.AlbumArtist
+          ?? currentTrack.Artists?.[0]
+          ?? currentTrack.AlbumArtists?.[0]?.Name
+          ?? 'Unknown artist';
+        stageTitle.textContent = correct ? 'Correct' : 'Not quite';
+        stageCopy.textContent = `${currentTrack.Name} — ${artist}`;
+        setResult(correct ? 'Nice one.' : 'The song was revealed above.', correct ? 'correct' : 'incorrect');
+        updateRoundList();
+        nextButton.textContent = round === TOTAL_ROUNDS ? 'Finish test' : 'Next track';
+        nextButton.hidden = false;
+        answerInput.value = '';
+      }
+
+      startButton.addEventListener('click', () => {
+        round = 0;
+        score = 0;
+        totalCount = null;
+        usedIds.clear();
+        scoreLabel.textContent = '0';
+        updateRoundList();
+        loadRound();
+      });
+
+      playButton.addEventListener('click', playPreview);
+      answerForm.addEventListener('submit', submitAnswer);
+      nextButton.addEventListener('click', () => {
+        if (round >= TOTAL_ROUNDS) finishGame();
+        else loadRound();
+      });
+      audio.addEventListener('ended', stopPreview);
+
+      if (!api) {
+        startButton.disabled = true;
+        stageTitle.textContent = 'Jellyfin API unavailable';
+        stageCopy.textContent = 'Open this page from a signed-in Jellyfin session.';
+      }
+    })();
+  </script>
+</body>
+</html>
