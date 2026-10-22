@@ -202,6 +202,13 @@
       background: #121a1e;
       font: inherit;
     }
+    #JellyBlindTestPage .blind-source-warning {
+      flex: 1 1 100%;
+      margin: 0;
+      color: var(--blind-warm);
+      font-size: 13px;
+    }
+    #JellyBlindTestPage .blind-source-warning[hidden] { display: none; }
 
     #JellyBlindTestPage .blind-button {
       display: inline-flex;
@@ -373,6 +380,7 @@
             <option value="library">Whole library</option>
           </select>
           <button class="blind-button primary" id="start-button" type="button">Start test</button>
+          <p class="blind-source-warning" id="source-warning" role="status" hidden></p>
         </div>
 
         <form class="blind-answer" id="answer-form" hidden>
@@ -435,6 +443,7 @@
       const roundList = document.getElementById('round-list');
       const scoreTotalLabel = document.getElementById('score-total');
       const sourceSelect = document.getElementById('source-select');
+      const sourceWarning = document.getElementById('source-warning');
       const countdown = document.getElementById('countdown');
       const countdownLabel = document.getElementById('countdown-label');
       const countdownValue = document.getElementById('countdown-value');
@@ -594,6 +603,23 @@
 
         renderRoundSlots();
         stageCopy.textContent = totalRounds + ' random songs. ' + guessingSeconds + ' seconds to guess while each song plays.';
+        updateSourceWarning();
+      }
+
+      function updateSourceWarning() {
+        const selectedOption = sourceSelect.selectedOptions[0];
+        const songCountValue = selectedOption?.dataset.songCount;
+        const songCount = songCountValue ? Number(songCountValue) : Number.NaN;
+        if (sourceSelect.value === 'library' || !Number.isFinite(songCount) || songCount >= totalRounds) {
+          sourceWarning.hidden = true;
+          sourceWarning.textContent = '';
+          return;
+        }
+
+        sourceWarning.hidden = false;
+        sourceWarning.textContent = songCount < 1
+          ? 'This playlist has no songs available.'
+          : 'This playlist has ' + songCount + ' song' + (songCount === 1 ? '' : 's') + ' for ' + totalRounds + ' rounds; songs may repeat.';
       }
 
       async function loadPlaylists() {
@@ -602,6 +628,7 @@
             IncludeItemTypes: 'Playlist',
             Recursive: true,
             Limit: 500,
+            Fields: 'MediaType,ChildCount',
             SortBy: 'SortName',
             SortOrder: 'Ascending',
           });
@@ -612,8 +639,10 @@
             const option = document.createElement('option');
             option.value = playlist.Id;
             option.textContent = playlist.Name;
+            option.dataset.songCount = String(playlist.ChildCount ?? playlist.RecursiveItemCount ?? '');
             sourceSelect.append(option);
           });
+          updateSourceWarning();
         } catch (_) {
           setResult('Could not load playlists. Whole library is still available.', 'error');
         }
@@ -952,6 +981,7 @@
         loadRound();
       });
 
+      sourceSelect.addEventListener('change', updateSourceWarning);
       answerForm.addEventListener('submit', submitAnswer);
       audioPlayers.forEach(player => player.addEventListener('ended', () => player.pause()));
 
