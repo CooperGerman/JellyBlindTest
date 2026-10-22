@@ -8,6 +8,22 @@
     "overview": "Adds a five-round blind test game using songs from the signed-in user's Jellyfin library.",
     "versions": [
       {
+        "version": "0.1.18.0",
+        "changelog": "- Keep the answer field open while a single Guessing timer runs, continue music through reveal, and crossfade between songs.",
+        "targetAbi": "12.1.0.0",
+        "sourceUrl": "https://raw.githubusercontent.com/CooperGerman/JellyBlindTest/main/plugin/JellyBlindTest.zip",
+        "checksum": "07345bde6234569284a048f456612d65",
+        "timestamp": "2026-10-22T14:13:16Z"
+      },
+      {
+        "version": "0.1.17.0",
+        "changelog": "- Merge preview and answer into one guessing phase, continue playback, and crossfade tracks between rounds.",
+        "targetAbi": "12.1.0.0",
+        "sourceUrl": "https://raw.githubusercontent.com/CooperGerman/JellyBlindTest/main/plugin/JellyBlindTest.zip",
+        "checksum": "1ba546dac660080a6d48df1b3852bddb",
+        "timestamp": "2026-10-22T14:10:19Z"
+      },
+      {
         "version": "0.1.16.0",
         "changelog": "- Inline the menu SVG, inherit the theme color, and make the question mark transparent.",
         "targetAbi": "12.1.0.0",

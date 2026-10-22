@@ -42,5 +42,7 @@ public sealed class PluginConfiguration : BasePluginConfiguration
 
     public int AnswerSeconds { get; set; } = 15;
 
+    public int GuessingSeconds { get; set; }
+
     public int RevealSeconds { get; set; } = 5;
 }

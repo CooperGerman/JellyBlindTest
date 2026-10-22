@@ -352,6 +352,7 @@
         </form>
         <p class="blind-result" id="result" role="status" aria-live="polite"></p>
         <audio id="audio" preload="none"></audio>
+        <audio id="audio-next" preload="none"></audio>
       </section>
 
       <aside class="blind-rail" aria-label="Game progress">
@@ -370,13 +371,13 @@
 
       const PLUGIN_ID = 'dcfb6e4c-e418-4bca-9a4a-f960e991ad00';
       const DEFAULT_ROUNDS = 5;
-      const DEFAULT_PREVIEW_SECONDS = 5;
-      const DEFAULT_ANSWER_SECONDS = 15;
+      const DEFAULT_GUESSING_SECONDS = 20;
       const DEFAULT_REVEAL_SECONDS = 5;
+      const CROSSFADE_MILLISECONDS = 1500;
       const MAX_PICK_ATTEMPTS = 12;
       const STUB_TAG = 'mdiscover-stub';
       const api = window.ApiClient ?? (window.parent !== window ? window.parent.ApiClient : null);
-      const audio = document.getElementById('audio');
+      const audioPlayers = [document.getElementById('audio'), document.getElementById('audio-next')];
       const startButton = document.getElementById('start-button');
       const answerForm = document.getElementById('answer-form');
       const answerInput = document.getElementById('answer-input');
@@ -401,8 +402,7 @@
       }
 
       let totalRounds = DEFAULT_ROUNDS;
-      let previewSeconds = DEFAULT_PREVIEW_SECONDS;
-      let answerSeconds = DEFAULT_ANSWER_SECONDS;
+      let guessingSeconds = DEFAULT_GUESSING_SECONDS;
       let revealSeconds = DEFAULT_REVEAL_SECONDS;
       let currentTrack = null;
       let round = 0;
@@ -410,6 +410,8 @@
       let submitted = false;
       let requestInProgress = false;
       let countdownInterval = 0;
+      let crossfadeInterval = 0;
+      let activeAudio = audioPlayers[0];
       let totalCount = null;
       const usedIds = new Set();
 
@@ -467,19 +469,23 @@
             dataType: 'json',
           });
           const configuredRounds = Number(settings?.roundCount ?? settings?.RoundCount);
-          const configuredPreview = Number(settings?.previewSeconds ?? settings?.PreviewSeconds);
-          const configuredAnswer = Number(settings?.answerSeconds ?? settings?.AnswerSeconds);
+          const configuredGuessing = Number(settings?.guessingSeconds ?? settings?.GuessingSeconds);
+          const legacyPreview = Number(settings?.previewSeconds ?? settings?.PreviewSeconds);
+          const legacyAnswer = Number(settings?.answerSeconds ?? settings?.AnswerSeconds);
           const configuredReveal = Number(settings?.revealSeconds ?? settings?.RevealSeconds);
           if (Number.isFinite(configuredRounds)) totalRounds = Math.max(1, Math.min(20, Math.round(configuredRounds)));
-          if (Number.isFinite(configuredPreview)) previewSeconds = Math.max(1, Math.min(30, Math.round(configuredPreview)));
-          if (Number.isFinite(configuredAnswer)) answerSeconds = Math.max(1, Math.min(120, Math.round(configuredAnswer)));
+          if (Number.isFinite(configuredGuessing) && configuredGuessing > 0) {
+            guessingSeconds = Math.max(1, Math.min(150, Math.round(configuredGuessing)));
+          } else if (Number.isFinite(legacyPreview) && Number.isFinite(legacyAnswer)) {
+            guessingSeconds = Math.max(1, Math.min(150, Math.round(legacyPreview + legacyAnswer)));
+          }
           if (Number.isFinite(configuredReveal)) revealSeconds = Math.max(1, Math.min(30, Math.round(configuredReveal)));
         } catch (_) {
           setResult('Using default game settings.', 'error');
         }
 
         renderRoundSlots();
-        stageCopy.textContent = totalRounds + ' random songs. ' + previewSeconds + ' seconds to listen, ' + answerSeconds + ' seconds to answer.';
+        stageCopy.textContent = totalRounds + ' random songs. ' + guessingSeconds + ' seconds to guess while each song plays.';
       }
 
       function showAlbumArtwork(track) {
@@ -530,10 +536,44 @@
 
       function stopAudio(reset = true) {
         clearCountdown();
-        audio.pause();
-        if (reset) {
-          try { audio.currentTime = 0; } catch (_) { /* Metadata may not be ready. */ }
+        window.clearInterval(crossfadeInterval);
+        crossfadeInterval = 0;
+        audioPlayers.forEach(player => {
+          player.pause();
+          player.volume = 1;
+          player.loop = false;
+          if (reset) {
+            try { player.currentTime = 0; } catch (_) { /* Metadata may not be ready. */ }
+          }
+        });
+        activeAudio = audioPlayers[0];
+      }
+
+      function crossfadeTo(incomingAudio) {
+        const outgoingAudio = activeAudio;
+        if (outgoingAudio === incomingAudio || outgoingAudio.paused || outgoingAudio.ended) {
+          outgoingAudio.pause();
+          incomingAudio.volume = 1;
+          activeAudio = incomingAudio;
+          return;
         }
+
+        window.clearInterval(crossfadeInterval);
+        const startedAt = performance.now();
+        activeAudio = incomingAudio;
+        crossfadeInterval = window.setInterval(() => {
+          const progress = Math.min((performance.now() - startedAt) / CROSSFADE_MILLISECONDS, 1);
+          incomingAudio.volume = progress;
+          outgoingAudio.volume = 1 - progress;
+          if (progress >= 1) {
+            window.clearInterval(crossfadeInterval);
+            crossfadeInterval = 0;
+            outgoingAudio.pause();
+            try { outgoingAudio.currentTime = 0; } catch (_) { /* Metadata may not be ready. */ }
+            outgoingAudio.volume = 1;
+            incomingAudio.volume = 1;
+          }
+        }, 40);
       }
 
       function finishGame() {
@@ -591,7 +631,7 @@
       async function loadRound() {
         if (requestInProgress) return;
         requestInProgress = true;
-        stopAudio();
+        clearCountdown();
         submitted = false;
         currentTrack = null;
         startButton.hidden = true;
@@ -605,12 +645,12 @@
         try {
           currentTrack = await chooseRandomTrack();
           round++;
-          answerForm.hidden = true;
-          answerInput.disabled = true;
-          submitButton.disabled = true;
+          answerForm.hidden = false;
+          answerInput.disabled = false;
+          submitButton.disabled = false;
           answerInput.value = '';
-          stageTitle.textContent = 'Listen closely';
-          stageCopy.textContent = 'Listen to the preview. The answer box opens when it ends.';
+          stageTitle.textContent = 'Guess the song';
+          stageCopy.textContent = 'The song is playing. Type the title before the timer ends.';
           setResult('');
           updateRoundList();
 
@@ -618,14 +658,22 @@
             api_key: api.accessToken(),
             static: true,
           });
-          audio.src = streamUrl;
-          await audio.play();
-          startCountdown('Music', previewSeconds, () => {
-            audio.pause();
-            beginAnswerPhase();
-          });
+          const incomingAudio = activeAudio === audioPlayers[0] ? audioPlayers[1] : audioPlayers[0];
+          incomingAudio.pause();
+          incomingAudio.removeAttribute('src');
+          incomingAudio.load();
+          incomingAudio.src = streamUrl;
+          incomingAudio.loop = true;
+          incomingAudio.volume = activeAudio.paused || activeAudio.ended ? 1 : 0;
+          await incomingAudio.play();
+          crossfadeTo(incomingAudio);
+          answerInput.focus();
+          startCountdown('Guessing', guessingSeconds, () => beginRevealPhase(!submitted));
         } catch (error) {
           stopAudio();
+          answerForm.hidden = true;
+          answerInput.disabled = true;
+          submitButton.disabled = true;
           stageTitle.textContent = 'Could not start this round';
           stageCopy.textContent = error?.message ?? 'The song library could not be read.';
           startButton.hidden = false;
@@ -661,26 +709,14 @@
 
         countdownLabel.textContent = 'Next song in';
         try {
-          await audio.play();
+          if (activeAudio.paused) await activeAudio.play();
         } catch (_) {
           setResult('The reveal will continue without audio.', 'error');
         }
         startCountdown('Next song in', revealSeconds, () => {
-          stopAudio();
           if (round >= totalRounds) finishGame();
           else loadRound();
         });
-      }
-
-      function beginAnswerPhase() {
-        answerForm.hidden = false;
-        answerInput.disabled = false;
-        submitButton.disabled = false;
-        answerInput.value = '';
-        answerInput.focus();
-        stageTitle.textContent = 'Your answer';
-        stageCopy.textContent = 'Type the title before time runs out.';
-        startCountdown('Answer', answerSeconds, () => beginRevealPhase(!submitted));
       }
 
       function submitAnswer(event) {
@@ -716,7 +752,7 @@
       });
 
       answerForm.addEventListener('submit', submitAnswer);
-      audio.addEventListener('ended', () => audio.pause());
+      audioPlayers.forEach(player => player.addEventListener('ended', () => player.pause()));
 
       if (!api) {
         startButton.disabled = true;

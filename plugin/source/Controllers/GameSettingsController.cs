@@ -18,16 +18,18 @@ public sealed class GameSettingsController : ControllerBase
             return StatusCode(StatusCodes.Status503ServiceUnavailable);
         }
 
+        var guessingSeconds = configuration.GuessingSeconds > 0
+            ? configuration.GuessingSeconds
+            : configuration.PreviewSeconds + configuration.AnswerSeconds;
+
         return Ok(new GameSettingsResponse(
             Math.Clamp(configuration.RoundCount, 1, 20),
-            Math.Clamp(configuration.PreviewSeconds, 1, 30),
-            Math.Clamp(configuration.AnswerSeconds, 1, 120),
+            Math.Clamp(guessingSeconds, 1, 150),
             Math.Clamp(configuration.RevealSeconds, 1, 30)));
     }
 }
 
 public sealed record GameSettingsResponse(
     int RoundCount,
-    int PreviewSeconds,
-    int AnswerSeconds,
+    int GuessingSeconds,
     int RevealSeconds);
