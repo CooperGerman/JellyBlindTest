@@ -317,7 +317,7 @@
       </div>
       <div class="blind-heading-actions">
         <a class="blind-settings-link" id="settings-link" href="#/configurationpage?name=JellyBlindTestSettings" hidden>Settings</a>
-        <div class="blind-score" aria-live="polite">Score <span id="score">0</span>/<span id="round-total">5</span></div>
+        <div class="blind-score" aria-live="polite">Score <span id="score">0</span>/<span id="score-total">10</span></div>
       </div>
     </header>
 
@@ -330,7 +330,7 @@
           <div class="blind-stage-content">
             <div class="blind-stage-mark" aria-hidden="true">♪</div>
             <h2 id="stage-title">Ready when you are</h2>
-            <p id="stage-copy">Five random songs. Listen to the preview, then type the title before time runs out.</p>
+            <p id="stage-copy">Five random songs. Enter the title and/or artist while each song plays.</p>
             <div class="blind-countdown" id="countdown" aria-live="off" hidden>
               <span id="countdown-label">Music</span>
               <strong id="countdown-value">5</strong>
@@ -344,9 +344,9 @@
         </div>
 
         <form class="blind-answer" id="answer-form" hidden>
-          <label for="answer-input">What song is this?</label>
+          <label for="answer-input">Song title and/or artist</label>
           <div class="blind-answer-row">
-            <input id="answer-input" name="answer" type="text" autocomplete="off" placeholder="Type the song title" disabled>
+            <input id="answer-input" name="answer" type="text" autocomplete="off" placeholder="Type the song title or artist" disabled>
             <button class="blind-button" id="submit-button" type="submit" disabled>Check answer</button>
           </div>
         </form>
@@ -373,6 +373,7 @@
       const DEFAULT_ROUNDS = 5;
       const DEFAULT_GUESSING_SECONDS = 20;
       const DEFAULT_REVEAL_SECONDS = 5;
+      const ANSWER_SIMILARITY_THRESHOLD = 0.8;
       const CROSSFADE_MILLISECONDS = 1500;
       const MAX_PICK_ATTEMPTS = 12;
       const STUB_TAG = 'mdiscover-stub';
@@ -388,7 +389,7 @@
       const scoreLabel = document.getElementById('score');
       const roundHeading = document.getElementById('round-heading');
       const roundList = document.getElementById('round-list');
-      const roundTotal = document.getElementById('round-total');
+      const scoreTotalLabel = document.getElementById('score-total');
       const countdown = document.getElementById('countdown');
       const countdownLabel = document.getElementById('countdown-label');
       const countdownValue = document.getElementById('countdown-value');
@@ -429,6 +430,57 @@
           .trim();
       }
 
+      function similarity(left, right) {
+        if (!left || !right) return 0;
+        const leftCharacters = Array.from(left);
+        const rightCharacters = Array.from(right);
+        let previousRow = Array.from({ length: rightCharacters.length + 1 }, (_, index) => index);
+
+        for (let leftIndex = 1; leftIndex <= leftCharacters.length; leftIndex++) {
+          const currentRow = [leftIndex];
+          for (let rightIndex = 1; rightIndex <= rightCharacters.length; rightIndex++) {
+            const substitutionCost = leftCharacters[leftIndex - 1] === rightCharacters[rightIndex - 1] ? 0 : 1;
+            currentRow[rightIndex] = Math.min(
+              currentRow[rightIndex - 1] + 1,
+              previousRow[rightIndex] + 1,
+              previousRow[rightIndex - 1] + substitutionCost,
+            );
+          }
+          previousRow = currentRow;
+        }
+
+        return 1 - previousRow[rightCharacters.length] / Math.max(leftCharacters.length, rightCharacters.length);
+      }
+
+      function phraseSimilarity(answer, target) {
+        const answerWords = normalizeAnswer(answer).split(' ').filter(Boolean);
+        const targetPhrase = normalizeAnswer(target);
+        const targetWordCount = targetPhrase.split(' ').filter(Boolean).length;
+        if (!answerWords.length || !targetWordCount) return 0;
+
+        let bestMatch = 0;
+        const shortestWindow = Math.max(1, targetWordCount - 1);
+        const longestWindow = targetWordCount + 1;
+        for (let start = 0; start < answerWords.length; start++) {
+          for (let length = shortestWindow; length <= longestWindow && start + length <= answerWords.length; length++) {
+            bestMatch = Math.max(
+              bestMatch,
+              similarity(answerWords.slice(start, start + length).join(' '), targetPhrase),
+            );
+          }
+        }
+        return bestMatch;
+      }
+
+      function getArtistNames(track) {
+        const artists = track.Artists?.length
+          ? track.Artists
+          : track.AlbumArtists?.length
+            ? track.AlbumArtists.map(artist => typeof artist === 'string' ? artist : artist.Name)
+            : [track.AlbumArtist];
+        return [...new Set(artists.map(normalizeAnswer).filter(Boolean))];
+      }
+
       function updateRoundList() {
         [...roundList.children].forEach((item, index) => {
           item.classList.toggle('current', index === round - 1 && !submitted);
@@ -458,7 +510,7 @@
           item.append(number, state);
           roundList.append(item);
         }
-        roundTotal.textContent = String(totalRounds);
+        scoreTotalLabel.textContent = String(totalRounds * 2);
       }
 
       async function loadSettings() {
@@ -580,7 +632,7 @@
         stopAudio();
         currentTrack = null;
         stageTitle.textContent = 'Set complete';
-        stageCopy.textContent = 'You scored ' + score + ' out of ' + totalRounds + '. Ready for another set?';
+        stageCopy.textContent = 'You scored ' + score + ' out of ' + totalRounds * 2 + ' points. Ready for another set?';
         answerForm.hidden = true;
         artworkContainer.hidden = true;
         albumArt.removeAttribute('src');
@@ -649,8 +701,8 @@
           answerInput.disabled = false;
           submitButton.disabled = false;
           answerInput.value = '';
-          stageTitle.textContent = 'Guess the song';
-          stageCopy.textContent = 'The song is playing. Type the title before the timer ends.';
+          stageTitle.textContent = 'Guess the song or artist';
+          stageCopy.textContent = 'The song is playing. Enter the title and/or artist before the timer ends.';
           setResult('');
           updateRoundList();
 
@@ -724,7 +776,7 @@
         if (!currentTrack || submitted) return;
         const guess = normalizeAnswer(answerInput.value);
         if (!guess) {
-          setResult('Type a title or choose to reveal the answer.', 'error');
+          setResult('Enter a song title and/or artist.', 'error');
           answerInput.focus();
           return;
         }
@@ -732,12 +784,20 @@
         submitted = true;
         answerInput.disabled = true;
         submitButton.disabled = true;
-        const correct = guess === normalizeAnswer(currentTrack.Name);
-        if (correct) score++;
+        const songMatched = phraseSimilarity(guess, currentTrack.Name) > ANSWER_SIMILARITY_THRESHOLD;
+        const artists = getArtistNames(currentTrack);
+        const matchedArtists = artists.filter(artist => phraseSimilarity(guess, artist) > ANSWER_SIMILARITY_THRESHOLD).length;
+        const artistMatched = artists.length > 0 && matchedArtists > artists.length / 2;
+        const points = Number(songMatched) + Number(artistMatched);
+        score += points;
         scoreLabel.textContent = String(score);
 
-        stageTitle.textContent = correct ? 'Correct' : 'Not quite';
-        setResult(correct ? 'Nice one. The reveal starts when the answer clock ends.' : 'Answer recorded. The reveal starts when the clock ends.', correct ? 'correct' : 'incorrect');
+        const matchedCategories = [songMatched ? 'song' : '', artistMatched ? 'artist' : ''].filter(Boolean);
+        stageTitle.textContent = points === 2 ? 'Song and artist matched' : points === 1 ? matchedCategories[0] + ' matched' : 'No match';
+        setResult(
+          points ? 'Matched ' + matchedCategories.join(' and ') + '. +' + points + (points === 1 ? ' point.' : ' points.') : 'Neither the title nor enough artist names matched.',
+          points ? 'correct' : 'incorrect',
+        );
         answerInput.value = '';
       }
 
