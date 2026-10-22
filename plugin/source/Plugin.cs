@@ -10,7 +10,10 @@ public sealed class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
     public Plugin(IApplicationPaths applicationPaths, IXmlSerializer xmlSerializer)
         : base(applicationPaths, xmlSerializer)
     {
+        Instance = this;
     }
+
+    public static Plugin? Instance { get; private set; }
 
     public override string Name => "JellyBlindTest";
 
@@ -23,14 +26,21 @@ public sealed class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
     {
         yield return new PluginPageInfo
         {
-            Name = "JellyBlindTest",
-            DisplayName = "Blind Test",
-            EnableInMainMenu = true,
-            EmbeddedResourcePath = "JellyBlindTest.Web.blindtest.html",
+            Name = "JellyBlindTestSettings",
+            DisplayName = "Blind Test Settings",
+            EnableInMainMenu = false,
+            EmbeddedResourcePath = "JellyBlindTest.Web.settings.html",
         };
     }
 }
 
 public sealed class PluginConfiguration : BasePluginConfiguration
 {
+    public int RoundCount { get; set; } = 5;
+
+    public int PreviewSeconds { get; set; } = 5;
+
+    public int AnswerSeconds { get; set; } = 15;
+
+    public int RevealSeconds { get; set; } = 5;
 }

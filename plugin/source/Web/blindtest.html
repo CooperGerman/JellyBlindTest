@@ -1,11 +1,6 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Blind Test</title>
+<div id="JellyBlindTestPage" data-role="page" class="page type-interior pluginConfigurationPage">
   <style>
-    :root {
+    #JellyBlindTestPage {
       color-scheme: dark;
       --blind-bg: #10171b;
       --blind-panel: #1b252a;
@@ -17,11 +12,11 @@
       --blind-error: #ff8178;
     }
 
-    * { box-sizing: border-box; }
+    #JellyBlindTestPage * { box-sizing: border-box; }
 
-    body {
+    #JellyBlindTestPage {
       margin: 0;
-      min-height: 100vh;
+      min-height: 100%;
       color: var(--blind-text);
       background:
         radial-gradient(ellipse at 80% 0%, rgba(62, 112, 107, .23), transparent 45%),
@@ -29,13 +24,13 @@
       font-family: system-ui, sans-serif;
     }
 
-    .blind-shell {
+    #JellyBlindTestPage .blind-shell {
       width: min(860px, calc(100% - 32px));
       margin: 0 auto;
       padding: 38px 0 56px;
     }
 
-    .blind-heading {
+    #JellyBlindTestPage .blind-heading {
       display: flex;
       align-items: end;
       justify-content: space-between;
@@ -44,13 +39,13 @@
       border-bottom: 1px solid var(--blind-line);
     }
 
-    h1 {
+    #JellyBlindTestPage h1 {
       margin: 0;
       font-size: 32px;
       font-weight: 700;
     }
 
-    .blind-kicker {
+    #JellyBlindTestPage .blind-kicker {
       margin: 0 0 6px;
       color: var(--blind-accent);
       font-size: 12px;
@@ -58,7 +53,7 @@
       text-transform: uppercase;
     }
 
-    .blind-score {
+    #JellyBlindTestPage .blind-score {
       min-width: 100px;
       padding: 10px 14px;
       border: 1px solid var(--blind-line);
@@ -68,7 +63,24 @@
       font-variant-numeric: tabular-nums;
     }
 
-    .blind-board {
+    #JellyBlindTestPage .blind-heading-actions {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    #JellyBlindTestPage .blind-settings-link {
+      color: var(--blind-muted);
+      font-size: 13px;
+      text-decoration: none;
+    }
+
+    #JellyBlindTestPage .blind-settings-link:hover,
+    #JellyBlindTestPage .blind-settings-link:focus { color: var(--blind-accent); }
+
+    #JellyBlindTestPage .blind-settings-link[hidden] { display: none; }
+
+    #JellyBlindTestPage .blind-board {
       display: grid;
       grid-template-columns: minmax(0, 1fr) 190px;
       gap: 24px;
@@ -76,12 +88,14 @@
       align-items: start;
     }
 
-    .blind-main { min-width: 0; }
+    #JellyBlindTestPage .blind-main { min-width: 0; }
 
-    .blind-stage {
+    #JellyBlindTestPage .blind-stage {
+      position: relative;
       display: grid;
       min-height: 250px;
       place-items: center;
+      overflow: hidden;
       padding: 32px;
       border: 1px solid var(--blind-line);
       border-radius: 8px;
@@ -92,9 +106,40 @@
       text-align: center;
     }
 
-    .blind-stage-content { width: min(100%, 460px); }
+    #JellyBlindTestPage .blind-stage-artwork {
+      position: absolute;
+      z-index: 0;
+      inset: 0;
+      overflow: hidden;
+      opacity: .23;
+      pointer-events: none;
+    }
 
-    .blind-stage-mark {
+    #JellyBlindTestPage .blind-stage-artwork[hidden] { display: none; }
+
+    #JellyBlindTestPage .blind-stage-artwork::after {
+      position: absolute;
+      inset: 0;
+      background: rgba(16, 23, 27, .52);
+      content: '';
+    }
+
+    #JellyBlindTestPage .blind-stage-artwork img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      filter: blur(1px);
+      transform: scale(1.025);
+    }
+
+    #JellyBlindTestPage .blind-stage-content {
+      position: relative;
+      z-index: 1;
+      width: min(100%, 460px);
+    }
+
+    #JellyBlindTestPage .blind-stage-mark {
       display: grid;
       width: 72px;
       aspect-ratio: 1;
@@ -106,25 +151,46 @@
       font-size: 30px;
     }
 
-    .blind-stage h2 {
+    #JellyBlindTestPage .blind-stage h2 {
       margin: 0 0 8px;
       font-size: 23px;
     }
 
-    .blind-stage p {
+    #JellyBlindTestPage .blind-stage p {
       margin: 0;
       color: var(--blind-muted);
       line-height: 1.5;
     }
 
-    .blind-actions {
+    #JellyBlindTestPage .blind-countdown {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 8px;
+      margin-top: 18px;
+      padding: 7px 12px;
+      border: 1px solid rgba(85, 214, 190, .36);
+      border-radius: 5px;
+      color: var(--blind-accent);
+      background: rgba(16, 23, 27, .76);
+      font-variant-numeric: tabular-nums;
+    }
+
+    #JellyBlindTestPage .blind-countdown[hidden] { display: none; }
+
+    #JellyBlindTestPage .blind-countdown strong {
+      min-width: 2ch;
+      font-size: 22px;
+      text-align: center;
+    }
+
+    #JellyBlindTestPage .blind-actions {
       display: flex;
       flex-wrap: wrap;
       gap: 10px;
       margin-top: 18px;
     }
 
-    .blind-button {
+    #JellyBlindTestPage .blind-button {
       display: inline-flex;
       min-height: 44px;
       align-items: center;
@@ -140,30 +206,30 @@
       cursor: pointer;
     }
 
-    .blind-button.primary {
+    #JellyBlindTestPage .blind-button.primary {
       border-color: var(--blind-accent);
       color: #0d1b1a;
       background: var(--blind-accent);
     }
 
-    .blind-button:disabled { cursor: default; opacity: .55; }
-    .blind-button[hidden] { display: none; }
+    #JellyBlindTestPage .blind-button:disabled { cursor: default; opacity: .55; }
+    #JellyBlindTestPage .blind-button[hidden] { display: none; }
 
-    .blind-answer { margin-top: 25px; }
+    #JellyBlindTestPage .blind-answer { margin-top: 25px; }
 
-    .blind-answer label {
+    #JellyBlindTestPage .blind-answer label {
       display: block;
       margin-bottom: 8px;
       color: var(--blind-muted);
       font-size: 14px;
     }
 
-    .blind-answer-row {
+    #JellyBlindTestPage .blind-answer-row {
       display: flex;
       gap: 9px;
     }
 
-    .blind-answer input {
+    #JellyBlindTestPage .blind-answer input {
       width: 100%;
       min-width: 0;
       min-height: 48px;
@@ -176,34 +242,34 @@
       font: inherit;
     }
 
-    .blind-answer input:focus { border-color: var(--blind-accent); }
-    .blind-answer input:disabled { opacity: .7; }
+    #JellyBlindTestPage .blind-answer input:focus { border-color: var(--blind-accent); }
+    #JellyBlindTestPage .blind-answer input:disabled { opacity: .7; }
 
-    .blind-result {
+    #JellyBlindTestPage .blind-result {
       min-height: 28px;
       margin-top: 12px;
       color: var(--blind-muted);
       line-height: 1.5;
     }
 
-    .blind-result.correct { color: var(--blind-accent); }
-    .blind-result.incorrect { color: var(--blind-warm); }
-    .blind-result.error { color: var(--blind-error); }
+    #JellyBlindTestPage .blind-result.correct { color: var(--blind-accent); }
+    #JellyBlindTestPage .blind-result.incorrect { color: var(--blind-warm); }
+    #JellyBlindTestPage .blind-result.error { color: var(--blind-error); }
 
-    .blind-rail {
+    #JellyBlindTestPage .blind-rail {
       padding: 18px;
       border-top: 3px solid var(--blind-warm);
       background: rgba(16, 23, 27, .7);
     }
 
-    .blind-rail h2 {
+    #JellyBlindTestPage .blind-rail h2 {
       margin: 0 0 16px;
       color: var(--blind-warm);
       font-size: 15px;
       text-transform: uppercase;
     }
 
-    .blind-rounds {
+    #JellyBlindTestPage .blind-rounds {
       display: grid;
       gap: 8px;
       margin: 0;
@@ -211,7 +277,7 @@
       list-style: none;
     }
 
-    .blind-rounds li {
+    #JellyBlindTestPage .blind-rounds li {
       display: flex;
       justify-content: space-between;
       padding: 8px 0;
@@ -220,10 +286,10 @@
       font-size: 13px;
     }
 
-    .blind-rounds li.current { color: var(--blind-text); }
-    .blind-rounds li.done { color: var(--blind-accent); }
+    #JellyBlindTestPage .blind-rounds li.current { color: var(--blind-text); }
+    #JellyBlindTestPage .blind-rounds li.done { color: var(--blind-accent); }
 
-    .blind-footnote {
+    #JellyBlindTestPage .blind-footnote {
       margin: 14px 0 0;
       color: var(--blind-muted);
       font-size: 12px;
@@ -231,42 +297,50 @@
     }
 
     @media (max-width: 640px) {
-      .blind-shell { padding-top: 24px; }
-      .blind-heading { align-items: start; }
-      .blind-board { grid-template-columns: 1fr; }
-      .blind-rail { order: -1; }
-      .blind-rounds { grid-template-columns: repeat(5, minmax(0, 1fr)); }
-      .blind-rounds li { display: block; border-bottom: 0; text-align: center; }
-      .blind-rounds li span { display: block; }
-      .blind-stage { min-height: 220px; padding: 24px 16px; }
-      .blind-answer-row { flex-direction: column; }
+      #JellyBlindTestPage .blind-shell { padding-top: 24px; }
+      #JellyBlindTestPage .blind-heading { align-items: start; }
+      #JellyBlindTestPage .blind-board { grid-template-columns: 1fr; }
+      #JellyBlindTestPage .blind-rail { order: -1; }
+      #JellyBlindTestPage .blind-rounds { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+      #JellyBlindTestPage .blind-rounds li { display: block; border-bottom: 0; text-align: center; }
+      #JellyBlindTestPage .blind-rounds li span { display: block; }
+      #JellyBlindTestPage .blind-stage { min-height: 220px; padding: 24px 16px; }
+      #JellyBlindTestPage .blind-answer-row { flex-direction: column; }
     }
   </style>
-</head>
-<body>
+  <div data-role="content">
   <main class="blind-shell">
     <header class="blind-heading">
       <div>
         <p class="blind-kicker">Jellyfin music game</p>
         <h1>Blind Test</h1>
       </div>
-      <div class="blind-score" aria-live="polite">Score <span id="score">0</span>/5</div>
+      <div class="blind-heading-actions">
+        <a class="blind-settings-link" id="settings-link" href="#/configurationpage?name=JellyBlindTestSettings" hidden>Settings</a>
+        <div class="blind-score" aria-live="polite">Score <span id="score">0</span>/<span id="round-total">5</span></div>
+      </div>
     </header>
 
     <div class="blind-board">
       <section class="blind-main" aria-label="Blind test game">
         <div class="blind-stage" aria-live="polite">
+          <div class="blind-stage-artwork" id="artwork-container" hidden>
+            <img id="album-art" alt="Album artwork">
+          </div>
           <div class="blind-stage-content">
             <div class="blind-stage-mark" aria-hidden="true">♪</div>
             <h2 id="stage-title">Ready when you are</h2>
-            <p id="stage-copy">Five random songs. Five seconds per clip. Type the title you hear.</p>
+            <p id="stage-copy">Five random songs. Listen to the preview, then type the title before time runs out.</p>
+            <div class="blind-countdown" id="countdown" aria-live="off" hidden>
+              <span id="countdown-label">Music</span>
+              <strong id="countdown-value">5</strong>
+              <span>sec</span>
+            </div>
           </div>
         </div>
 
         <div class="blind-actions">
           <button class="blind-button primary" id="start-button" type="button">Start test</button>
-          <button class="blind-button primary" id="play-button" type="button" hidden>Play 5-second clip</button>
-          <button class="blind-button" id="next-button" type="button" hidden>Next track</button>
         </div>
 
         <form class="blind-answer" id="answer-form" hidden>
@@ -283,30 +357,27 @@
       <aside class="blind-rail" aria-label="Game progress">
         <h2 id="round-heading">Your set</h2>
         <ol class="blind-rounds" id="round-list">
-          <li><span>01</span><span>Waiting</span></li>
-          <li><span>02</span><span>Waiting</span></li>
-          <li><span>03</span><span>Waiting</span></li>
-          <li><span>04</span><span>Waiting</span></li>
-          <li><span>05</span><span>Waiting</span></li>
         </ol>
         <p class="blind-footnote">Only songs available to your Jellyfin user are included.</p>
       </aside>
     </div>
   </main>
+  </div>
 
   <script>
     (function () {
       'use strict';
 
-      const TOTAL_ROUNDS = 5;
-      const PREVIEW_SECONDS = 5;
+      const PLUGIN_ID = 'dcfb6e4c-e418-4bca-9a4a-f960e991ad00';
+      const DEFAULT_ROUNDS = 5;
+      const DEFAULT_PREVIEW_SECONDS = 5;
+      const DEFAULT_ANSWER_SECONDS = 15;
+      const DEFAULT_REVEAL_SECONDS = 5;
       const MAX_PICK_ATTEMPTS = 12;
       const STUB_TAG = 'mdiscover-stub';
-      const api = window.ApiClient;
+      const api = window.ApiClient ?? (window.parent !== window ? window.parent.ApiClient : null);
       const audio = document.getElementById('audio');
       const startButton = document.getElementById('start-button');
-      const playButton = document.getElementById('play-button');
-      const nextButton = document.getElementById('next-button');
       const answerForm = document.getElementById('answer-form');
       const answerInput = document.getElementById('answer-input');
       const submitButton = document.getElementById('submit-button');
@@ -316,20 +387,35 @@
       const scoreLabel = document.getElementById('score');
       const roundHeading = document.getElementById('round-heading');
       const roundList = document.getElementById('round-list');
+      const roundTotal = document.getElementById('round-total');
+      const countdown = document.getElementById('countdown');
+      const countdownLabel = document.getElementById('countdown-label');
+      const countdownValue = document.getElementById('countdown-value');
+      const settingsLink = document.getElementById('settings-link');
+      const artworkContainer = document.getElementById('artwork-container');
+      const albumArt = document.getElementById('album-art');
 
+      if (settingsLink && window.parent !== window) {
+        settingsLink.href = window.parent.location.pathname + '#/configurationpage?name=JellyBlindTestSettings';
+        settingsLink.target = '_top';
+      }
+
+      let totalRounds = DEFAULT_ROUNDS;
+      let previewSeconds = DEFAULT_PREVIEW_SECONDS;
+      let answerSeconds = DEFAULT_ANSWER_SECONDS;
+      let revealSeconds = DEFAULT_REVEAL_SECONDS;
       let currentTrack = null;
       let round = 0;
       let score = 0;
       let submitted = false;
       let requestInProgress = false;
-      let timeoutId = 0;
-      let playId = 0;
+      let countdownInterval = 0;
       let totalCount = null;
       const usedIds = new Set();
 
       function setResult(message, tone) {
         result.textContent = message;
-        result.className = `blind-result${tone ? ` ${tone}` : ''}`;
+        result.className = 'blind-result' + (tone ? ' ' + tone : '');
       }
 
       function normalizeAnswer(value) {
@@ -354,26 +440,111 @@
             state.textContent = 'Waiting';
           }
         });
-        roundHeading.textContent = round > 0 && round <= TOTAL_ROUNDS
-          ? `Round ${round} of ${TOTAL_ROUNDS}`
+        roundHeading.textContent = round > 0 && round <= totalRounds
+          ? 'Round ' + round + ' of ' + totalRounds
           : 'Your set';
       }
 
-      function stopPreview() {
-        window.clearTimeout(timeoutId);
+      function renderRoundSlots() {
+        roundList.replaceChildren();
+        for (let index = 0; index < totalRounds; index++) {
+          const item = document.createElement('li');
+          const number = document.createElement('span');
+          const state = document.createElement('span');
+          number.textContent = String(index + 1).padStart(2, '0');
+          state.textContent = 'Waiting';
+          item.append(number, state);
+          roundList.append(item);
+        }
+        roundTotal.textContent = String(totalRounds);
+      }
+
+      async function loadSettings() {
+        try {
+          const settings = await api.ajax({
+            type: 'GET',
+            url: api.getUrl('jellyblindtest/settings'),
+            dataType: 'json',
+          });
+          const configuredRounds = Number(settings?.roundCount ?? settings?.RoundCount);
+          const configuredPreview = Number(settings?.previewSeconds ?? settings?.PreviewSeconds);
+          const configuredAnswer = Number(settings?.answerSeconds ?? settings?.AnswerSeconds);
+          const configuredReveal = Number(settings?.revealSeconds ?? settings?.RevealSeconds);
+          if (Number.isFinite(configuredRounds)) totalRounds = Math.max(1, Math.min(20, Math.round(configuredRounds)));
+          if (Number.isFinite(configuredPreview)) previewSeconds = Math.max(1, Math.min(30, Math.round(configuredPreview)));
+          if (Number.isFinite(configuredAnswer)) answerSeconds = Math.max(1, Math.min(120, Math.round(configuredAnswer)));
+          if (Number.isFinite(configuredReveal)) revealSeconds = Math.max(1, Math.min(30, Math.round(configuredReveal)));
+        } catch (_) {
+          setResult('Using default game settings.', 'error');
+        }
+
+        renderRoundSlots();
+        stageCopy.textContent = totalRounds + ' random songs. ' + previewSeconds + ' seconds to listen, ' + answerSeconds + ' seconds to answer.';
+      }
+
+      function showAlbumArtwork(track) {
+        const imageTag = track.AlbumPrimaryImageTag || track.ImageTags?.Primary;
+        const imageItemId = track.AlbumId || track.Id;
+        if (!imageTag || !imageItemId) {
+          artworkContainer.hidden = true;
+          albumArt.removeAttribute('src');
+          return;
+        }
+
+        albumArt.alt = track.Album ? track.Album + ' album artwork' : 'Album artwork';
+        albumArt.onerror = () => { artworkContainer.hidden = true; };
+        albumArt.src = api.getImageUrl(imageItemId, {
+          type: 'Primary',
+          tag: imageTag,
+          maxWidth: 440,
+          quality: 90,
+        });
+        artworkContainer.hidden = false;
+      }
+
+      function clearCountdown() {
+        window.clearInterval(countdownInterval);
+        countdownInterval = 0;
+        countdown.hidden = true;
+      }
+
+      function startCountdown(label, seconds, onComplete) {
+        window.clearInterval(countdownInterval);
+        countdownLabel.textContent = label;
+        countdown.hidden = false;
+        const deadline = Date.now() + seconds * 1000;
+
+        function tick() {
+          const remaining = Math.max(0, deadline - Date.now());
+          countdownValue.textContent = String(Math.ceil(remaining / 1000));
+          if (remaining === 0) {
+            window.clearInterval(countdownInterval);
+            countdownInterval = 0;
+            onComplete();
+          }
+        }
+
+        tick();
+        if (seconds > 0) countdownInterval = window.setInterval(tick, 100);
+      }
+
+      function stopAudio(reset = true) {
+        clearCountdown();
         audio.pause();
-        try { audio.currentTime = 0; } catch (_) { /* Metadata may not be ready. */ }
-        playButton.textContent = 'Replay 5-second clip';
+        if (reset) {
+          try { audio.currentTime = 0; } catch (_) { /* Metadata may not be ready. */ }
+        }
       }
 
       function finishGame() {
-        stopPreview();
+        stopAudio();
         currentTrack = null;
         stageTitle.textContent = 'Set complete';
-        stageCopy.textContent = `You scored ${score} out of ${TOTAL_ROUNDS}. Ready for another set?`;
+        stageCopy.textContent = 'You scored ' + score + ' out of ' + totalRounds + '. Ready for another set?';
         answerForm.hidden = true;
-        playButton.hidden = true;
-        nextButton.hidden = true;
+        artworkContainer.hidden = true;
+        albumArt.removeAttribute('src');
+        countdown.hidden = true;
         startButton.hidden = false;
         startButton.textContent = 'Play again';
         roundHeading.textContent = 'Final score';
@@ -386,7 +557,7 @@
           IncludeItemTypes: 'Audio',
           Recursive: true,
           Limit: 1,
-          Fields: 'Tags',
+          Fields: 'Tags,ImageTags,AlbumPrimaryImageTag,AlbumId,Album,AlbumArtist,Artists,AlbumArtists',
         };
 
         if (totalCount === null) {
@@ -398,6 +569,7 @@
         }
 
         if (totalCount < 1) throw new Error('No songs are available in your Jellyfin library.');
+        if (usedIds.size >= totalCount) usedIds.clear();
 
         for (let attempt = 0; attempt < MAX_PICK_ATTEMPTS; attempt++) {
           const startIndex = Math.floor(Math.random() * totalCount);
@@ -419,13 +591,13 @@
       async function loadRound() {
         if (requestInProgress) return;
         requestInProgress = true;
-        stopPreview();
+        stopAudio();
         submitted = false;
         currentTrack = null;
         startButton.hidden = true;
-        playButton.hidden = true;
-        nextButton.hidden = true;
         answerForm.hidden = true;
+        artworkContainer.hidden = true;
+        albumArt.removeAttribute('src');
         setResult('Finding a random song…');
         stageTitle.textContent = 'Picking a song';
         stageCopy.textContent = 'One moment.';
@@ -433,17 +605,27 @@
         try {
           currentTrack = await chooseRandomTrack();
           round++;
-          playButton.hidden = false;
-          answerForm.hidden = false;
-          answerInput.disabled = false;
-          submitButton.disabled = false;
+          answerForm.hidden = true;
+          answerInput.disabled = true;
+          submitButton.disabled = true;
           answerInput.value = '';
-          answerInput.focus();
           stageTitle.textContent = 'Listen closely';
-          stageCopy.textContent = 'Play the clip, then type the song title.';
+          stageCopy.textContent = 'Listen to the preview. The answer box opens when it ends.';
           setResult('');
           updateRoundList();
+
+          const streamUrl = api.getUrl('Audio/' + encodeURIComponent(currentTrack.Id) + '/stream', {
+            api_key: api.accessToken(),
+            static: true,
+          });
+          audio.src = streamUrl;
+          await audio.play();
+          startCountdown('Music', previewSeconds, () => {
+            audio.pause();
+            beginAnswerPhase();
+          });
         } catch (error) {
+          stopAudio();
           stageTitle.textContent = 'Could not start this round';
           stageCopy.textContent = error?.message ?? 'The song library could not be read.';
           startButton.hidden = false;
@@ -454,27 +636,51 @@
         }
       }
 
-      async function playPreview() {
+      function revealAnswer(timedOut) {
         if (!currentTrack) return;
-        stopPreview();
-        const thisPlayId = ++playId;
-        const streamUrl = api.getUrl(`Audio/${encodeURIComponent(currentTrack.Id)}/stream`, {
-          api_key: api.accessToken(),
-          static: true,
-        });
-        audio.src = streamUrl;
+        submitted = true;
+        answerForm.hidden = true;
+        answerInput.disabled = true;
+        submitButton.disabled = true;
+
+        const artist = currentTrack.AlbumArtist
+          ?? currentTrack.Artists?.[0]
+          ?? currentTrack.AlbumArtists?.[0]?.Name
+          ?? 'Unknown artist';
+        if (timedOut) {
+          stageTitle.textContent = 'Time is up';
+          setResult('No answer submitted. The song was:', 'incorrect');
+        }
+        stageCopy.textContent = currentTrack.Name + ' — ' + artist;
+        showAlbumArtwork(currentTrack);
+        updateRoundList();
+      }
+
+      async function beginRevealPhase(timedOut) {
+        revealAnswer(timedOut);
+
+        countdownLabel.textContent = 'Next song in';
         try {
           await audio.play();
-          if (thisPlayId !== playId) return;
-          playButton.textContent = 'Playing…';
-          timeoutId = window.setTimeout(() => {
-            if (thisPlayId !== playId) return;
-            stopPreview();
-          }, PREVIEW_SECONDS * 1000);
-        } catch (error) {
-          setResult('Playback failed. Try playing the clip again.', 'error');
-          playButton.textContent = 'Play 5-second clip';
+        } catch (_) {
+          setResult('The reveal will continue without audio.', 'error');
         }
+        startCountdown('Next song in', revealSeconds, () => {
+          stopAudio();
+          if (round >= totalRounds) finishGame();
+          else loadRound();
+        });
+      }
+
+      function beginAnswerPhase() {
+        answerForm.hidden = false;
+        answerInput.disabled = false;
+        submitButton.disabled = false;
+        answerInput.value = '';
+        answerInput.focus();
+        stageTitle.textContent = 'Your answer';
+        stageCopy.textContent = 'Type the title before time runs out.';
+        startCountdown('Answer', answerSeconds, () => beginRevealPhase(!submitted));
       }
 
       function submitAnswer(event) {
@@ -488,23 +694,14 @@
         }
 
         submitted = true;
-        stopPreview();
         answerInput.disabled = true;
         submitButton.disabled = true;
         const correct = guess === normalizeAnswer(currentTrack.Name);
         if (correct) score++;
         scoreLabel.textContent = String(score);
 
-        const artist = currentTrack.AlbumArtist
-          ?? currentTrack.Artists?.[0]
-          ?? currentTrack.AlbumArtists?.[0]?.Name
-          ?? 'Unknown artist';
         stageTitle.textContent = correct ? 'Correct' : 'Not quite';
-        stageCopy.textContent = `${currentTrack.Name} — ${artist}`;
-        setResult(correct ? 'Nice one.' : 'The song was revealed above.', correct ? 'correct' : 'incorrect');
-        updateRoundList();
-        nextButton.textContent = round === TOTAL_ROUNDS ? 'Finish test' : 'Next track';
-        nextButton.hidden = false;
+        setResult(correct ? 'Nice one. The reveal starts when the answer clock ends.' : 'Answer recorded. The reveal starts when the clock ends.', correct ? 'correct' : 'incorrect');
         answerInput.value = '';
       }
 
@@ -518,20 +715,20 @@
         loadRound();
       });
 
-      playButton.addEventListener('click', playPreview);
       answerForm.addEventListener('submit', submitAnswer);
-      nextButton.addEventListener('click', () => {
-        if (round >= TOTAL_ROUNDS) finishGame();
-        else loadRound();
-      });
-      audio.addEventListener('ended', stopPreview);
+      audio.addEventListener('ended', () => audio.pause());
 
       if (!api) {
         startButton.disabled = true;
         stageTitle.textContent = 'Jellyfin API unavailable';
         stageCopy.textContent = 'Open this page from a signed-in Jellyfin session.';
+      } else {
+        startButton.disabled = true;
+        api.getCurrentUser().then(user => {
+          settingsLink.hidden = user?.Policy?.IsAdministrator !== true;
+        }).catch(() => {});
+        loadSettings().finally(() => { startButton.disabled = false; });
       }
     })();
   </script>
-</body>
-</html>
+</div>

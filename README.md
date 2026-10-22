@@ -1,22 +1,26 @@
 # JellyBlindTest
 
-A Jellyfin plugin that adds a **Blind Test** page to the main menu. The first
-version chooses local library tracks at random, plays a five-second preview,
-and asks the player to type the song title.
+A Jellyfin plugin that adds a **Blind Test** link to Jellyfin's regular user
+navigation and a separate Dashboard settings page. It chooses local library tracks at random,
+plays a short preview, and asks the player to type the song title.
 
 ## First version
 
-- Five rounds per game.
+- Administrators can open **Settings** from the game page to configure rounds,
+  preview duration, answer time, and the post-answer playback interval.
 - Random tracks are selected from the signed-in user's accessible Jellyfin
   Audio library.
 - Tracks do not repeat within a game when enough tracks are available.
-- The preview stops automatically after five seconds; it can be replayed.
+- Starting a round immediately plays a preview for the configured duration.
+- An answer countdown opens after the preview; unanswered rounds are revealed
+  automatically when time expires.
+- After reveal, playback continues for the configured interval before the next
+  round starts automatically.
 - The answer is checked without case, accent, or punctuation differences.
-- The song and artist are revealed after each answer.
+- The song, artist, and album artwork are revealed after each answer when
+  artwork is available.
 
-The five-second preview length and five-round game length are constants in the
-page script for now. Multiple choice, genre/popularity filters, and configurable
-round settings can be added later.
+Multiple choice and genre/popularity filters can be added later.
 
 ## Build
 
@@ -32,7 +36,7 @@ target also updates the checksum and timestamp in `manifest.json`.
 ## Install
 
 Extract `plugin/JellyBlindTest.zip` into a folder named
-`JellyBlindTest_0.1.0.0` in Jellyfin's plugins directory, then restart Jellyfin.
+`JellyBlindTest_0.1.12.0` in Jellyfin's plugins directory, then restart Jellyfin.
 The folder name must match the version in `meta.json`.
 
 For catalog publishing, the manifest currently points at the `main` branch of

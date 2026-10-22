@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<div id="JellyBlindTestSettingsPage" data-role="page" class="page type-interior pluginConfigurationPage">
+  <div data-role="content">
+    <div class="content-primary">
+      <form id="JellyBlindTestSettingsForm">
+        <h2>Blind Test Settings</h2>
+        <p>Control the length of each game and the audio preview duration.</p>
+
+        <div class="inputContainer">
+          <label class="inputLabel" for="RoundCount">Rounds per game</label>
+          <input is="emby-input" id="RoundCount" type="number" min="1" max="20" step="1">
+          <div class="fieldDescription">Choose between 1 and 20 songs per game.</div>
+        </div>
+
+        <div class="inputContainer">
+          <label class="inputLabel" for="PreviewSeconds">Preview duration (seconds)</label>
+          <input is="emby-input" id="PreviewSeconds" type="number" min="1" max="30" step="1">
+          <div class="fieldDescription">Choose between 1 and 30 seconds per clip.</div>
+        </div>
+
+        <div class="inputContainer">
+          <label class="inputLabel" for="AnswerSeconds">Answer time (seconds)</label>
+          <input is="emby-input" id="AnswerSeconds" type="number" min="1" max="120" step="1">
+          <div class="fieldDescription">Time to enter an answer after the preview stops.</div>
+        </div>
+
+        <div class="inputContainer">
+          <label class="inputLabel" for="RevealSeconds">Reveal playback (seconds)</label>
+          <input is="emby-input" id="RevealSeconds" type="number" min="1" max="30" step="1">
+          <div class="fieldDescription">How long the revealed song continues before the next round starts.</div>
+        </div>
+
+        <button is="emby-button" type="submit" class="raised button-submit-block"><span>Save</span></button>
+      </form>
+    </div>
+  </div>
+  <script>
+    (function () {
+      'use strict';
+      const pluginId = 'dcfb6e4c-e418-4bca-9a4a-f960e991ad00';
+      const page = document.querySelector('#JellyBlindTestSettingsPage');
+      const form = page.querySelector('#JellyBlindTestSettingsForm');
+      const defaults = { RoundCount: 5, PreviewSeconds: 5, AnswerSeconds: 15, RevealSeconds: 5 };
+      const fields = Object.keys(defaults);
+
+      function load(config) {
+        fields.forEach(name => {
+          const input = page.querySelector('#' + name);
+          input.value = config[name] ?? defaults[name];
+        });
+      }
+
+      page.addEventListener('pageshow', function () {
+        Dashboard.showLoadingMsg();
+        ApiClient.getPluginConfiguration(pluginId)
+          .then(load)
+          .catch(() => Dashboard.alert('Could not load Blind Test settings.'))
+          .finally(() => Dashboard.hideLoadingMsg());
+      });
+
+      form.addEventListener('submit', function (event) {
+        event.preventDefault();
+        Dashboard.showLoadingMsg();
+        ApiClient.getPluginConfiguration(pluginId)
+          .then(config => {
+            config.RoundCount = Math.max(1, Math.min(20, parseInt(page.querySelector('#RoundCount').value, 10) || 5));
+            config.PreviewSeconds = Math.max(1, Math.min(30, parseInt(page.querySelector('#PreviewSeconds').value, 10) || 5));
+            config.AnswerSeconds = Math.max(1, Math.min(120, parseInt(page.querySelector('#AnswerSeconds').value, 10) || 15));
+            config.RevealSeconds = Math.max(1, Math.min(30, parseInt(page.querySelector('#RevealSeconds').value, 10) || 5));
+            return ApiClient.updatePluginConfiguration(pluginId, config);
+          })
+          .then(Dashboard.processPluginConfigurationUpdateResult)
+          .finally(() => Dashboard.hideLoadingMsg());
+        return false;
+      });
+    })();
+  </script>
+</div>
