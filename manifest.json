@@ -8,6 +8,14 @@
     "overview": "Adds a five-round blind test game using songs from the signed-in user's Jellyfin library.",
     "versions": [
       {
+        "version": "0.1.21.0",
+        "changelog": "- Allow repeated guesses until reveal and show expected versus submitted answers for every round.",
+        "targetAbi": "12.1.0.0",
+        "sourceUrl": "https://raw.githubusercontent.com/CooperGerman/JellyBlindTest/main/plugin/JellyBlindTest.zip",
+        "checksum": "178a5d8083577902bd1464caa1065094",
+        "timestamp": "2026-10-22T14:37:13Z"
+      },
+      {
         "version": "0.1.20.0",
         "changelog": "- Require over 80% fuzzy title and artist similarity, award both categories independently, and require a strict artist majority for collaborations.",
         "targetAbi": "12.1.0.0",

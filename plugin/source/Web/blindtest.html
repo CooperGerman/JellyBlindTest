@@ -296,6 +296,20 @@
       line-height: 1.5;
     }
 
+    #JellyBlindTestPage .blind-results { margin-top: 34px; }
+    #JellyBlindTestPage .blind-results[hidden] { display: none; }
+    #JellyBlindTestPage .blind-results h2 { margin: 0 0 12px; font-size: 20px; }
+    #JellyBlindTestPage .blind-results-wrap { overflow-x: auto; border-top: 1px solid var(--blind-line); }
+    #JellyBlindTestPage .blind-results table { width: 100%; border-collapse: collapse; text-align: left; }
+    #JellyBlindTestPage .blind-results th,
+    #JellyBlindTestPage .blind-results td { min-width: 150px; padding: 12px 14px; border-bottom: 1px solid var(--blind-line); vertical-align: top; }
+    #JellyBlindTestPage .blind-results th { color: var(--blind-muted); font-size: 12px; font-weight: 650; }
+    #JellyBlindTestPage .blind-results td:first-child,
+    #JellyBlindTestPage .blind-results th:first-child { width: 70px; min-width: 70px; }
+    #JellyBlindTestPage .blind-results .expected-title { display: block; font-weight: 650; }
+    #JellyBlindTestPage .blind-results .expected-artist { display: block; margin-top: 4px; color: var(--blind-muted); font-size: 13px; }
+    #JellyBlindTestPage .blind-results .submitted-answer { white-space: pre-wrap; }
+
     @media (max-width: 640px) {
       #JellyBlindTestPage .blind-shell { padding-top: 24px; }
       #JellyBlindTestPage .blind-heading { align-items: start; }
@@ -362,6 +376,18 @@
         <p class="blind-footnote">Only songs available to your Jellyfin user are included.</p>
       </aside>
     </div>
+
+    <section class="blind-results" id="results-summary" aria-labelledby="results-heading" hidden>
+      <h2 id="results-heading">Round answers</h2>
+      <div class="blind-results-wrap">
+        <table aria-label="Expected and submitted answers by round">
+          <thead>
+            <tr><th scope="col">Round</th><th scope="col">Expected answer</th><th scope="col">Your submitted answer</th></tr>
+          </thead>
+          <tbody id="results-body"></tbody>
+        </table>
+      </div>
+    </section>
   </main>
   </div>
 
@@ -409,12 +435,16 @@
       let round = 0;
       let score = 0;
       let submitted = false;
+      let roundRevealed = false;
       let requestInProgress = false;
       let countdownInterval = 0;
       let crossfadeInterval = 0;
       let activeAudio = audioPlayers[0];
       let totalCount = null;
       const usedIds = new Set();
+      const roundResults = [];
+      const resultsSummary = document.getElementById('results-summary');
+      const resultsBody = document.getElementById('results-body');
 
       function setResult(message, tone) {
         result.textContent = message;
@@ -472,21 +502,28 @@
         return bestMatch;
       }
 
-      function getArtistNames(track) {
+      function getArtistLabels(track) {
         const artists = track.Artists?.length
           ? track.Artists
           : track.AlbumArtists?.length
             ? track.AlbumArtists.map(artist => typeof artist === 'string' ? artist : artist.Name)
             : [track.AlbumArtist];
-        return [...new Set(artists.map(normalizeAnswer).filter(Boolean))];
+        return [...new Set(artists
+          .map(artist => typeof artist === 'string' ? artist : artist?.Name)
+          .map(artist => String(artist ?? '').trim())
+          .filter(Boolean))];
+      }
+
+      function getArtistNames(track) {
+        return getArtistLabels(track).map(normalizeAnswer);
       }
 
       function updateRoundList() {
         [...roundList.children].forEach((item, index) => {
-          item.classList.toggle('current', index === round - 1 && !submitted);
-          item.classList.toggle('done', index < round - (submitted ? 0 : 1));
+          item.classList.toggle('current', index === round - 1 && !roundRevealed);
+          item.classList.toggle('done', index < round - 1 || (index === round - 1 && roundRevealed));
           const state = item.children[1];
-          if (index < round - 1 || (index === round - 1 && submitted)) {
+          if (index < round - 1 || (index === round - 1 && roundRevealed)) {
             state.textContent = 'Done';
           } else if (index === round - 1) {
             state.textContent = 'Playing';
@@ -629,6 +666,7 @@
       }
 
       function finishGame() {
+        renderResults();
         stopAudio();
         currentTrack = null;
         stageTitle.textContent = 'Set complete';
@@ -641,6 +679,30 @@
         startButton.textContent = 'Play again';
         roundHeading.textContent = 'Final score';
         setResult('');
+      }
+
+      function renderResults() {
+        resultsBody.replaceChildren();
+        roundResults.forEach((roundResult, index) => {
+          const row = document.createElement('tr');
+          const roundCell = document.createElement('td');
+          const expectedCell = document.createElement('td');
+          const answerCell = document.createElement('td');
+          const title = document.createElement('span');
+          const artist = document.createElement('span');
+
+          roundCell.textContent = String(index + 1).padStart(2, '0');
+          title.className = 'expected-title';
+          title.textContent = roundResult.title;
+          artist.className = 'expected-artist';
+          artist.textContent = roundResult.artist || 'Unknown artist';
+          answerCell.className = 'submitted-answer';
+          answerCell.textContent = roundResult.submittedAnswer || 'No answer submitted';
+          expectedCell.append(title, artist);
+          row.append(roundCell, expectedCell, answerCell);
+          resultsBody.append(row);
+        });
+        resultsSummary.hidden = false;
       }
 
       async function chooseRandomTrack() {
@@ -685,6 +747,7 @@
         requestInProgress = true;
         clearCountdown();
         submitted = false;
+        roundRevealed = false;
         currentTrack = null;
         startButton.hidden = true;
         answerForm.hidden = true;
@@ -697,6 +760,13 @@
         try {
           currentTrack = await chooseRandomTrack();
           round++;
+          roundResults[round - 1] = {
+            title: currentTrack.Name,
+            artist: getArtistLabels(currentTrack).join(', '),
+            submittedAnswer: '',
+            songMatched: false,
+            artistMatched: false,
+          };
           answerForm.hidden = false;
           answerInput.disabled = false;
           submitButton.disabled = false;
@@ -739,14 +809,12 @@
       function revealAnswer(timedOut) {
         if (!currentTrack) return;
         submitted = true;
+        roundRevealed = true;
         answerForm.hidden = true;
         answerInput.disabled = true;
         submitButton.disabled = true;
 
-        const artist = currentTrack.AlbumArtist
-          ?? currentTrack.Artists?.[0]
-          ?? currentTrack.AlbumArtists?.[0]?.Name
-          ?? 'Unknown artist';
+        const artist = getArtistLabels(currentTrack).join(', ') || 'Unknown artist';
         if (timedOut) {
           stageTitle.textContent = 'Time is up';
           setResult('No answer submitted. The song was:', 'incorrect');
@@ -773,7 +841,7 @@
 
       function submitAnswer(event) {
         event.preventDefault();
-        if (!currentTrack || submitted) return;
+        if (!currentTrack || roundRevealed) return;
         const guess = normalizeAnswer(answerInput.value);
         if (!guess) {
           setResult('Enter a song title and/or artist.', 'error');
@@ -782,28 +850,37 @@
         }
 
         submitted = true;
-        answerInput.disabled = true;
-        submitButton.disabled = true;
+        const roundResult = roundResults[round - 1];
+        roundResult.submittedAnswer = answerInput.value.trim();
         const songMatched = phraseSimilarity(guess, currentTrack.Name) > ANSWER_SIMILARITY_THRESHOLD;
         const artists = getArtistNames(currentTrack);
         const matchedArtists = artists.filter(artist => phraseSimilarity(guess, artist) > ANSWER_SIMILARITY_THRESHOLD).length;
         const artistMatched = artists.length > 0 && matchedArtists > artists.length / 2;
-        const points = Number(songMatched) + Number(artistMatched);
+        const newSongPoint = songMatched && !roundResult.songMatched;
+        const newArtistPoint = artistMatched && !roundResult.artistMatched;
+        roundResult.songMatched ||= songMatched;
+        roundResult.artistMatched ||= artistMatched;
+        const points = Number(newSongPoint) + Number(newArtistPoint);
         score += points;
         scoreLabel.textContent = String(score);
 
-        const matchedCategories = [songMatched ? 'song' : '', artistMatched ? 'artist' : ''].filter(Boolean);
-        stageTitle.textContent = points === 2 ? 'Song and artist matched' : points === 1 ? matchedCategories[0] + ' matched' : 'No match';
-        setResult(
-          points ? 'Matched ' + matchedCategories.join(' and ') + '. +' + points + (points === 1 ? ' point.' : ' points.') : 'Neither the title nor enough artist names matched.',
-          points ? 'correct' : 'incorrect',
-        );
+        const matchedCategories = [roundResult.songMatched ? 'song' : '', roundResult.artistMatched ? 'artist' : ''].filter(Boolean);
+        stageTitle.textContent = matchedCategories.length ? matchedCategories.join(' and ') + ' matched' : 'No match yet';
+        setResult(points
+          ? 'Matched ' + [newSongPoint ? 'song' : '', newArtistPoint ? 'artist' : ''].filter(Boolean).join(' and ') + '. +' + points + (points === 1 ? ' point. Keep guessing.' : ' points. Keep guessing.')
+          : matchedCategories.length
+            ? 'Already earned the ' + matchedCategories.join(' and ') + ' point. Keep guessing for another match.'
+            : 'No match yet. Keep trying until the timer ends.', points ? 'correct' : '');
         answerInput.value = '';
+        answerInput.focus();
       }
 
       startButton.addEventListener('click', () => {
         round = 0;
         score = 0;
+        roundResults.length = 0;
+        resultsBody.replaceChildren();
+        resultsSummary.hidden = true;
         totalCount = null;
         usedIds.clear();
         scoreLabel.textContent = '0';
