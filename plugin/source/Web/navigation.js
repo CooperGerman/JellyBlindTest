@@ -87,14 +87,14 @@
     link.id = LINK_ID;
     link.href = '#';
     const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    icon.setAttribute('viewBox', '0 0 24 24');
+    icon.setAttribute('viewBox', '0 0 36 36');
     icon.setAttribute('width', '24');
     icon.setAttribute('height', '24');
     icon.setAttribute('aria-hidden', 'true');
     icon.setAttribute('focusable', 'false');
     icon.style.flex = 'none';
     icon.style.marginRight = '8px';
-    icon.innerHTML = '<path d="M7.2 18.6V7.3l6.1-1.2v9.1" fill="none" stroke="currentColor" stroke-width="3.1" stroke-linecap="square" stroke-linejoin="miter"/><ellipse cx="4.1" cy="19" rx="3.4" ry="2.6" transform="rotate(-20 4.1 19)" fill="currentColor"/><ellipse cx="13.1" cy="15.7" rx="3.1" ry="2.4" transform="rotate(-20 13.1 15.7)" fill="currentColor"/><circle cx="18" cy="5" r="4.7" fill="currentColor"/><path d="M16.3 4c.1-1.2.9-2 2-2s2 .8 2 1.9c0 .9-.5 1.5-1.3 2-.7.5-1 1-1 1.8" fill="none" stroke="#10171b" stroke-width="1.25" stroke-linecap="round"/><circle cx="18" cy="9.2" r=".65" fill="#10171b"/>';
+    icon.innerHTML = '<defs><mask id="jbt-question-cutout" maskUnits="userSpaceOnUse" x="0" y="0" width="36" height="36"><rect width="36" height="36" fill="white"/><path d="M23 5.8c.2-1.8 1.5-2.9 3.4-2.9 2 0 3.3 1.2 3.3 3 0 1.4-.8 2.2-2 3.1-1 .7-1.5 1.3-1.5 2.5" fill="none" stroke="black" stroke-linecap="round" stroke-width="1.5"/><circle cx="26.2" cy="13.4" r=".7" fill="black"/></mask></defs><g fill="currentColor"><path d="M10.4 9.8 21.4 7.8v4.1l-7.2 1.3v12.4h-3.8zm7.2 2.4 3.8-.7v13.4h-3.8z"/><ellipse cx="6.5" cy="29.5" rx="5.7" ry="4.3"/><ellipse cx="17.8" cy="26.2" rx="5.5" ry="4"/><circle cx="25.5" cy="7.5" r="7" mask="url(#jbt-question-cutout)"/></g>';
     const label = document.createElement('span');
     label.textContent = 'Blind Test';
     link.append(icon, label);

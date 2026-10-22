@@ -22,6 +22,8 @@ plays a short preview, and asks the player to type the song title.
 
 Multiple choice and genre/popularity filters can be added later.
 
+The menu icon's editable SVG source is in `plugin/source/Web/blindtest-icon.svg`.
+
 ## Build
 
 Requires the .NET 10 SDK.
@@ -36,7 +38,7 @@ target also updates the checksum and timestamp in `manifest.json`.
 ## Install
 
 Extract `plugin/JellyBlindTest.zip` into a folder named
-`JellyBlindTest_0.1.14.0` in Jellyfin's plugins directory, then restart Jellyfin.
+`JellyBlindTest_0.1.16.0` in Jellyfin's plugins directory, then restart Jellyfin.
 The folder name must match the version in `meta.json`.
 
 For catalog publishing, the manifest currently points at the `main` branch of

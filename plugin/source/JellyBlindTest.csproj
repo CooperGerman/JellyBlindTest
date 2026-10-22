@@ -8,9 +8,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <LangVersion>latest</LangVersion>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
-    <Version>0.1.14.0</Version>
-    <AssemblyVersion>0.1.14.0</AssemblyVersion>
-    <FileVersion>0.1.14.0</FileVersion>
+    <Version>0.1.16.0</Version>
+    <AssemblyVersion>0.1.16.0</AssemblyVersion>
+    <FileVersion>0.1.16.0</FileVersion>
     <DebugType>none</DebugType>
     <DebugSymbols>false</DebugSymbols>
     <Deterministic>true</Deterministic>
@@ -28,6 +28,7 @@
     <EmbeddedResource Include="Web/blindtest.html" LogicalName="JellyBlindTest.Web.blindtest.html" />
     <EmbeddedResource Include="Web/settings.html" LogicalName="JellyBlindTest.Web.settings.html" />
     <EmbeddedResource Include="Web/navigation.js" LogicalName="JellyBlindTest.Web.navigation.js" />
+    <EmbeddedResource Include="Web/blindtest-icon.svg" LogicalName="JellyBlindTest.Web.blindtest-icon.svg" />
   </ItemGroup>
 
   <Target Name="StripUnneededDlls" AfterTargets="Build">
