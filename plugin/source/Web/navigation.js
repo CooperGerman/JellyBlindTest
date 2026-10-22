@@ -94,7 +94,7 @@
     icon.setAttribute('focusable', 'false');
     icon.style.flex = 'none';
     icon.style.marginRight = '8px';
-    icon.innerHTML = '<path d="M14 4c-3.1-1.8-7.4-.3-8 3.1-.6 3.3 2.8 4.4 5.4 4.7 2 .3 2.3 2 1.1 3.6M14 4v12.8" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><ellipse cx="10.6" cy="19" rx="3.1" ry="2.1" transform="rotate(-24 10.6 19)" fill="currentColor"/>';
+    icon.innerHTML = '<path d="M7.2 18.6V7.3l6.1-1.2v9.1" fill="none" stroke="currentColor" stroke-width="3.1" stroke-linecap="square" stroke-linejoin="miter"/><ellipse cx="4.1" cy="19" rx="3.4" ry="2.6" transform="rotate(-20 4.1 19)" fill="currentColor"/><ellipse cx="13.1" cy="15.7" rx="3.1" ry="2.4" transform="rotate(-20 13.1 15.7)" fill="currentColor"/><circle cx="18" cy="5" r="4.7" fill="currentColor"/><path d="M16.3 4c.1-1.2.9-2 2-2s2 .8 2 1.9c0 .9-.5 1.5-1.3 2-.7.5-1 1-1 1.8" fill="none" stroke="#10171b" stroke-width="1.25" stroke-linecap="round"/><circle cx="18" cy="9.2" r=".65" fill="#10171b"/>';
     const label = document.createElement('span');
     label.textContent = 'Blind Test';
     link.append(icon, label);
