@@ -86,7 +86,18 @@
     const link = template.cloneNode(false);
     link.id = LINK_ID;
     link.href = '#';
-    link.textContent = 'Blind Test';
+    const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    icon.setAttribute('viewBox', '0 0 24 24');
+    icon.setAttribute('width', '24');
+    icon.setAttribute('height', '24');
+    icon.setAttribute('aria-hidden', 'true');
+    icon.setAttribute('focusable', 'false');
+    icon.style.flex = 'none';
+    icon.style.marginRight = '8px';
+    icon.innerHTML = '<path d="M14 4c-3.1-1.8-7.4-.3-8 3.1-.6 3.3 2.8 4.4 5.4 4.7 2 .3 2.3 2 1.1 3.6M14 4v12.8" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><ellipse cx="10.6" cy="19" rx="3.1" ry="2.1" transform="rotate(-24 10.6 19)" fill="currentColor"/>';
+    const label = document.createElement('span');
+    label.textContent = 'Blind Test';
+    link.append(icon, label);
     link.setAttribute('aria-label', 'Open Blind Test');
     link.setAttribute('title', 'Blind Test');
     link.addEventListener('click', event => {

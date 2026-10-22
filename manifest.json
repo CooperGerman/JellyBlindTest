@@ -8,6 +8,14 @@
     "overview": "Adds a five-round blind test game using songs from the signed-in user's Jellyfin library.",
     "versions": [
       {
+        "version": "0.1.13.0",
+        "changelog": "- Add a mirrored music-note SVG icon to the Blind Test main-menu link.",
+        "targetAbi": "12.1.0.0",
+        "sourceUrl": "https://raw.githubusercontent.com/CooperGerman/JellyBlindTest/main/plugin/JellyBlindTest.zip",
+        "checksum": "65b71ca9baf01864fc93a39b7bb091a9",
+        "timestamp": "2026-10-22T13:10:18Z"
+      },
+      {
         "version": "0.1.12.0",
         "changelog": "- Start the song with each round, show Music and Answer countdowns, reveal on timeout, and advance automatically after configurable reveal playback.\n- Add configurable answer and reveal durations to Blind Test Settings.\n- Fix the Settings link route from the embedded game back to Jellyfin Web.\n- Fix the game script initialization after loading the page through Jellyfin's same-origin iframe.\n- Fix iframe startup by avoiding a duplicate ApiClient declaration.\n- Load the game in a same-origin page frame so its scripts run under Jellyfin Web's security policy.\n- Add a regular Jellyfin user-navigation link that opens the Blind Test outside Dashboard.\n- Keep game settings in a separate Dashboard plugin page.\n- Show post-answer album artwork as a translucent background in the stage card.\n- Fix the final-round button to use the configured round count.\n- Add an admin-only Settings link to the main game page and request album image metadata for reliable post-answer artwork.\n- Add a main-menu game page, separate admin settings, configurable rounds and preview duration, and post-answer album artwork.\n- Label the initial preview action as Play and switch it to Replay after playback.\n- Render the Blind Test as a Jellyfin Web page fragment and avoid translation parsing of JavaScript template literals.\n- Add a five-round random blind test with five-second song previews and typed title answers.",
         "targetAbi": "12.1.0.0",
