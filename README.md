@@ -38,7 +38,7 @@ target also updates the checksum and timestamp in `manifest.json`.
 ## Install
 
 Extract `plugin/JellyBlindTest.zip` into a folder named
-`JellyBlindTest_0.1.21.0` in Jellyfin's plugins directory, then restart Jellyfin.
+`JellyBlindTest_0.1.22.0` in Jellyfin's plugins directory, then restart Jellyfin.
 The folder name must match the version in `meta.json`.
 
 For catalog publishing, the manifest currently points at the `main` branch of

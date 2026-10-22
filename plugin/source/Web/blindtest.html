@@ -186,8 +186,21 @@
     #JellyBlindTestPage .blind-actions {
       display: flex;
       flex-wrap: wrap;
+      align-items: center;
       gap: 10px;
       margin-top: 18px;
+    }
+
+    #JellyBlindTestPage .blind-source-label { color: var(--blind-muted); font-size: 14px; }
+    #JellyBlindTestPage .blind-source-select {
+      min-width: min(280px, 100%);
+      min-height: 44px;
+      padding: 9px 34px 9px 12px;
+      border: 1px solid var(--blind-line);
+      border-radius: 5px;
+      color: var(--blind-text);
+      background: #121a1e;
+      font: inherit;
     }
 
     #JellyBlindTestPage .blind-button {
@@ -320,6 +333,7 @@
       #JellyBlindTestPage .blind-rounds li span { display: block; }
       #JellyBlindTestPage .blind-stage { min-height: 220px; padding: 24px 16px; }
       #JellyBlindTestPage .blind-answer-row { flex-direction: column; }
+      #JellyBlindTestPage .blind-source-select { flex: 1 1 100%; }
     }
   </style>
   <div data-role="content">
@@ -354,6 +368,10 @@
         </div>
 
         <div class="blind-actions">
+          <label class="blind-source-label" for="source-select">Play from</label>
+          <select class="blind-source-select" id="source-select" aria-label="Choose a music source">
+            <option value="library">Whole library</option>
+          </select>
           <button class="blind-button primary" id="start-button" type="button">Start test</button>
         </div>
 
@@ -416,6 +434,7 @@
       const roundHeading = document.getElementById('round-heading');
       const roundList = document.getElementById('round-list');
       const scoreTotalLabel = document.getElementById('score-total');
+      const sourceSelect = document.getElementById('source-select');
       const countdown = document.getElementById('countdown');
       const countdownLabel = document.getElementById('countdown-label');
       const countdownValue = document.getElementById('countdown-value');
@@ -577,6 +596,29 @@
         stageCopy.textContent = totalRounds + ' random songs. ' + guessingSeconds + ' seconds to guess while each song plays.';
       }
 
+      async function loadPlaylists() {
+        try {
+          const response = await api.getItems(api.getCurrentUserId(), {
+            IncludeItemTypes: 'Playlist',
+            Recursive: true,
+            Limit: 500,
+            SortBy: 'SortName',
+            SortOrder: 'Ascending',
+          });
+          const playlists = (response.Items ?? [])
+            .filter(playlist => playlist.MediaType === 'Audio')
+            .sort((left, right) => left.Name.localeCompare(right.Name));
+          playlists.forEach(playlist => {
+            const option = document.createElement('option');
+            option.value = playlist.Id;
+            option.textContent = playlist.Name;
+            sourceSelect.append(option);
+          });
+        } catch (_) {
+          setResult('Could not load playlists. Whole library is still available.', 'error');
+        }
+      }
+
       function showAlbumArtwork(track) {
         const imageTag = track.AlbumPrimaryImageTag || track.ImageTags?.Primary;
         const imageItemId = track.AlbumId || track.Id;
@@ -679,6 +721,7 @@
         startButton.textContent = 'Play again';
         roundHeading.textContent = 'Final score';
         setResult('');
+        sourceSelect.disabled = false;
       }
 
       function renderResults() {
@@ -707,6 +750,7 @@
 
       async function chooseRandomTrack() {
         const userId = api.getCurrentUserId();
+        const selectedSource = sourceSelect.value;
         const baseQuery = {
           IncludeItemTypes: 'Audio',
           Recursive: true,
@@ -714,24 +758,42 @@
           Fields: 'Tags,ImageTags,AlbumPrimaryImageTag,AlbumId,Album,AlbumArtist,Artists,AlbumArtists',
         };
 
-        if (totalCount === null) {
-          const countResponse = await api.getItems(userId, {
+        async function getAudioItems(startIndex, enableTotalRecordCount) {
+          const query = {
             ...baseQuery,
-            EnableTotalRecordCount: true,
+            EnableTotalRecordCount: enableTotalRecordCount,
+            ...(startIndex === null ? {} : { StartIndex: startIndex }),
+          };
+          if (selectedSource === 'library') return api.getItems(userId, query);
+
+          return api.ajax({
+            type: 'GET',
+            url: api.getUrl('Playlists/' + encodeURIComponent(selectedSource) + '/Items', {
+              userId,
+              StartIndex: startIndex ?? 0,
+              Limit: 1,
+              EnableTotalRecordCount: enableTotalRecordCount,
+              Fields: baseQuery.Fields,
+            }),
+            dataType: 'json',
           });
+        }
+
+        if (totalCount === null) {
+          const countResponse = await getAudioItems(null, true);
           totalCount = Number(countResponse?.TotalRecordCount ?? 0);
         }
 
-        if (totalCount < 1) throw new Error('No songs are available in your Jellyfin library.');
+        if (totalCount < 1) {
+          throw new Error(selectedSource === 'library'
+            ? 'No songs are available in your Jellyfin library.'
+            : 'The selected playlist has no available songs.');
+        }
         if (usedIds.size >= totalCount) usedIds.clear();
 
         for (let attempt = 0; attempt < MAX_PICK_ATTEMPTS; attempt++) {
           const startIndex = Math.floor(Math.random() * totalCount);
-          const response = await api.getItems(userId, {
-            ...baseQuery,
-            EnableTotalRecordCount: false,
-            StartIndex: startIndex,
-          });
+          const response = await getAudioItems(startIndex, false);
           const item = response?.Items?.[0];
           if (!item?.Id || usedIds.has(item.Id)) continue;
           if ((item.Tags ?? []).includes(STUB_TAG)) continue;
@@ -748,6 +810,7 @@
         clearCountdown();
         submitted = false;
         roundRevealed = false;
+        sourceSelect.disabled = true;
         currentTrack = null;
         startButton.hidden = true;
         answerForm.hidden = true;
@@ -796,6 +859,7 @@
           answerForm.hidden = true;
           answerInput.disabled = true;
           submitButton.disabled = true;
+          sourceSelect.disabled = false;
           stageTitle.textContent = 'Could not start this round';
           stageCopy.textContent = error?.message ?? 'The song library could not be read.';
           startButton.hidden = false;
@@ -900,7 +964,7 @@
         api.getCurrentUser().then(user => {
           settingsLink.hidden = user?.Policy?.IsAdministrator !== true;
         }).catch(() => {});
-        loadSettings().finally(() => { startButton.disabled = false; });
+        Promise.all([loadSettings(), loadPlaylists()]).finally(() => { startButton.disabled = false; });
       }
     })();
   </script>

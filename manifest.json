@@ -8,6 +8,14 @@
     "overview": "Adds a five-round blind test game using songs from the signed-in user's Jellyfin library.",
     "versions": [
       {
+        "version": "0.1.22.0",
+        "changelog": "- Add a source menu to play from the whole audio library or a selected audio playlist.",
+        "targetAbi": "12.1.0.0",
+        "sourceUrl": "https://raw.githubusercontent.com/CooperGerman/JellyBlindTest/main/plugin/JellyBlindTest.zip",
+        "checksum": "cd45a8befd33ad70cf01d5c9e1ccd6d3",
+        "timestamp": "2026-10-22T14:59:04Z"
+      },
+      {
         "version": "0.1.21.0",
         "changelog": "- Allow repeated guesses until reveal and show expected versus submitted answers for every round.",
         "targetAbi": "12.1.0.0",
