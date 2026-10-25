@@ -1,6 +1,6 @@
 name: "JellyBlindTest"
 guid: "dcfb6e4c-e418-4bca-9a4a-f960e991ad00"
-version: "0.1.26.0"
+version: "0.1.27.0"
 targetAbi: "12.1.0.0"
 framework: "net10.0"
 owner: "self-hosted"

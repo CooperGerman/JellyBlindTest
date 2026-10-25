@@ -8,6 +8,14 @@
     "overview": "Adds a five-round blind test game using songs from the signed-in user's Jellyfin library.",
     "versions": [
       {
+        "version": "0.1.27.0",
+        "changelog": "- Add Up/Down navigation through submitted answer history while the guessing phase is active.",
+        "targetAbi": "12.1.0.0",
+        "sourceUrl": "https://raw.githubusercontent.com/CooperGerman/JellyBlindTest/main/plugin/JellyBlindTest.zip",
+        "checksum": "ae14664fa407f0c221aa1d20a197fe7f",
+        "timestamp": "2026-10-25T15:31:46Z"
+      },
+      {
         "version": "0.1.26.0",
         "changelog": "- Add a JellyMusicDiscovery version-gated toggle for the artist-balanced Most popular mode.",
         "targetAbi": "12.1.0.0",

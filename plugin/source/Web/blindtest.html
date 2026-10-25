@@ -428,6 +428,7 @@
       const DEFAULT_POPULAR_TRACK_POOL_SIZE = 500;
       const DEFAULT_REVEAL_SECONDS = 5;
       const ANSWER_SIMILARITY_THRESHOLD = 0.8;
+      const MAX_ANSWER_HISTORY = 50;
       const CROSSFADE_MILLISECONDS = 1500;
       const MAX_PICK_ATTEMPTS = 12;
       const MAX_POPULAR_ARTIST_PICK_ATTEMPTS = 40;
@@ -478,6 +479,9 @@
       let popularTracks = null;
       const usedIds = new Set();
       const usedPopularArtists = new Set();
+      const answerHistory = [];
+      let answerHistoryIndex = 0;
+      let answerHistoryDraft = '';
       const roundResults = [];
       const resultsSummary = document.getElementById('results-summary');
       const resultsBody = document.getElementById('results-body');
@@ -822,6 +826,26 @@
         resultsSummary.hidden = false;
       }
 
+      function navigateAnswerHistory(event) {
+        if (event.target !== answerInput) return;
+        if (event.key !== 'ArrowUp' && event.key !== 'ArrowDown') return;
+        if (!answerHistory.length) return;
+
+        if (event.key === 'ArrowUp') {
+          if (answerHistoryIndex === answerHistory.length) answerHistoryDraft = answerInput.value;
+          answerHistoryIndex = Math.max(0, answerHistoryIndex - 1);
+          answerInput.value = answerHistory[answerHistoryIndex];
+        } else if (answerHistoryIndex < answerHistory.length) {
+          answerHistoryIndex++;
+          answerInput.value = answerHistoryIndex === answerHistory.length
+            ? answerHistoryDraft
+            : answerHistory[answerHistoryIndex];
+        }
+
+        event.preventDefault();
+        answerInput.setSelectionRange(answerInput.value.length, answerInput.value.length);
+      }
+
       async function choosePopularTrack(userId) {
         if (popularTracks === null) {
           const response = await api.ajax({
@@ -1060,7 +1084,12 @@
 
         submitted = true;
         const roundResult = roundResults[round - 1];
-        roundResult.submittedAnswer = answerInput.value.trim();
+        const submittedAnswer = answerInput.value.trim();
+        roundResult.submittedAnswer = submittedAnswer;
+        if (answerHistory[answerHistory.length - 1] !== submittedAnswer) answerHistory.push(submittedAnswer);
+        if (answerHistory.length > MAX_ANSWER_HISTORY) answerHistory.shift();
+        answerHistoryIndex = answerHistory.length;
+        answerHistoryDraft = '';
         const songMatched = phraseSimilarity(guess, currentTrack.Name) > ANSWER_SIMILARITY_THRESHOLD;
         const artists = getArtistNames(currentTrack);
         const matchedArtists = artists.filter(artist => phraseSimilarity(guess, artist) > ANSWER_SIMILARITY_THRESHOLD).length;
@@ -1100,6 +1129,7 @@
       });
 
       sourceSelect.addEventListener('change', updateSourceWarning);
+      answerForm.addEventListener('keydown', navigateAnswerHistory);
       answerForm.addEventListener('submit', submitAnswer);
       audioPlayers.forEach(player => player.addEventListener('ended', () => player.pause()));
 
