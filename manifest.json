@@ -8,6 +8,22 @@
     "overview": "Adds a five-round blind test game using songs from the signed-in user's Jellyfin library.",
     "versions": [
       {
+        "version": "0.1.25.0",
+        "changelog": "- Add an artist-balanced Most popular mode using cached Deezer ranks and configurable top-N pool size.",
+        "targetAbi": "12.1.0.0",
+        "sourceUrl": "https://raw.githubusercontent.com/CooperGerman/JellyBlindTest/main/plugin/JellyBlindTest.zip",
+        "checksum": "8d3d7152cfd488b0cd6207026f19d022",
+        "timestamp": "2026-10-25T15:15:40Z"
+      },
+      {
+        "version": "0.1.24.0",
+        "changelog": "- Add Most popular mode using cached server-wide Deezer ranks and a configurable top-N pool size.",
+        "targetAbi": "12.1.0.0",
+        "sourceUrl": "https://raw.githubusercontent.com/CooperGerman/JellyBlindTest/main/plugin/JellyBlindTest.zip",
+        "checksum": "a7822892e1b2aaeea4248353cbef72c4",
+        "timestamp": "2026-10-25T15:05:51Z"
+      },
+      {
         "version": "0.1.23.0",
         "changelog": "- Warn when a selected audio playlist has fewer songs than the configured rounds.",
         "targetAbi": "12.1.0.0",

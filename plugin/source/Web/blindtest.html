@@ -378,6 +378,7 @@
           <label class="blind-source-label" for="source-select">Play from</label>
           <select class="blind-source-select" id="source-select" aria-label="Choose a music source">
             <option value="library">Whole library</option>
+            <option value="popular">Most popular (top 500)</option>
           </select>
           <button class="blind-button primary" id="start-button" type="button">Start test</button>
           <p class="blind-source-warning" id="source-warning" role="status" hidden></p>
@@ -424,10 +425,12 @@
       const PLUGIN_ID = 'dcfb6e4c-e418-4bca-9a4a-f960e991ad00';
       const DEFAULT_ROUNDS = 5;
       const DEFAULT_GUESSING_SECONDS = 20;
+      const DEFAULT_POPULAR_TRACK_POOL_SIZE = 500;
       const DEFAULT_REVEAL_SECONDS = 5;
       const ANSWER_SIMILARITY_THRESHOLD = 0.8;
       const CROSSFADE_MILLISECONDS = 1500;
       const MAX_PICK_ATTEMPTS = 12;
+      const MAX_POPULAR_ARTIST_PICK_ATTEMPTS = 40;
       const STUB_TAG = 'mdiscover-stub';
       const api = window.ApiClient ?? (window.parent !== window ? window.parent.ApiClient : null);
       const audioPlayers = [document.getElementById('audio'), document.getElementById('audio-next')];
@@ -458,6 +461,7 @@
 
       let totalRounds = DEFAULT_ROUNDS;
       let guessingSeconds = DEFAULT_GUESSING_SECONDS;
+      let popularTrackPoolSize = DEFAULT_POPULAR_TRACK_POOL_SIZE;
       let revealSeconds = DEFAULT_REVEAL_SECONDS;
       let currentTrack = null;
       let round = 0;
@@ -469,7 +473,9 @@
       let crossfadeInterval = 0;
       let activeAudio = audioPlayers[0];
       let totalCount = null;
+      let popularTracks = null;
       const usedIds = new Set();
+      const usedPopularArtists = new Set();
       const roundResults = [];
       const resultsSummary = document.getElementById('results-summary');
       const resultsBody = document.getElementById('results-body');
@@ -587,6 +593,7 @@
           });
           const configuredRounds = Number(settings?.roundCount ?? settings?.RoundCount);
           const configuredGuessing = Number(settings?.guessingSeconds ?? settings?.GuessingSeconds);
+          const configuredPopularPoolSize = Number(settings?.popularTrackPoolSize ?? settings?.PopularTrackPoolSize);
           const legacyPreview = Number(settings?.previewSeconds ?? settings?.PreviewSeconds);
           const legacyAnswer = Number(settings?.answerSeconds ?? settings?.AnswerSeconds);
           const configuredReveal = Number(settings?.revealSeconds ?? settings?.RevealSeconds);
@@ -596,11 +603,15 @@
           } else if (Number.isFinite(legacyPreview) && Number.isFinite(legacyAnswer)) {
             guessingSeconds = Math.max(1, Math.min(150, Math.round(legacyPreview + legacyAnswer)));
           }
+          if (Number.isFinite(configuredPopularPoolSize) && configuredPopularPoolSize > 0) {
+            popularTrackPoolSize = Math.max(1, Math.min(5000, Math.round(configuredPopularPoolSize)));
+          }
           if (Number.isFinite(configuredReveal)) revealSeconds = Math.max(1, Math.min(30, Math.round(configuredReveal)));
         } catch (_) {
           setResult('Using default game settings.', 'error');
         }
 
+        sourceSelect.querySelector('option[value="popular"]').textContent = 'Most popular artists';
         renderRoundSlots();
         stageCopy.textContent = totalRounds + ' random songs. ' + guessingSeconds + ' seconds to guess while each song plays.';
         updateSourceWarning();
@@ -608,6 +619,12 @@
 
       function updateSourceWarning() {
         const selectedOption = sourceSelect.selectedOptions[0];
+        if (sourceSelect.value === 'popular') {
+          sourceWarning.hidden = false;
+          sourceWarning.textContent = 'Random artists, songs weighted by Deezer rank within the global top ' + popularTrackPoolSize + '. Run Music Discovery\'s popularity scan if needed.';
+          return;
+        }
+
         const songCountValue = selectedOption?.dataset.songCount;
         const songCount = songCountValue ? Number(songCountValue) : Number.NaN;
         if (sourceSelect.value === 'library' || !Number.isFinite(songCount) || songCount >= totalRounds) {
@@ -777,9 +794,80 @@
         resultsSummary.hidden = false;
       }
 
+      async function choosePopularTrack(userId) {
+        if (popularTracks === null) {
+          const response = await api.ajax({
+            type: 'GET',
+            url: api.getUrl('mdiscover/popularity/top', { limit: popularTrackPoolSize }),
+            dataType: 'json',
+          });
+          const tracks = response?.tracks ?? response?.Tracks ?? [];
+          popularTracks = [...new Map(tracks
+            .filter(track => Number(track.deezerRank ?? track.DeezerRank) > 0)
+            .map(track => [track.itemId ?? track.ItemId, track])
+            .filter(([itemId]) => Boolean(itemId))).values()];
+          if (popularTracks.length < popularTrackPoolSize) {
+            sourceWarning.hidden = false;
+            sourceWarning.textContent = 'Only ' + popularTracks.length + ' of ' + popularTrackPoolSize + ' ranked songs are cached. Run Music Discovery\'s popularity scan to expand the pool.';
+          }
+        }
+
+        totalCount = popularTracks.length;
+        if (totalCount < 1) {
+          throw new Error('No globally ranked songs are cached. Run Music Discovery\'s Deezer popularity scan first.');
+        }
+        if (usedIds.size >= totalCount) {
+          usedIds.clear();
+          usedPopularArtists.clear();
+        }
+
+        for (let attempt = 0; attempt < MAX_POPULAR_ARTIST_PICK_ATTEMPTS; attempt++) {
+          const groups = new Map();
+          popularTracks.forEach(track => {
+            const artist = (track.artists ?? track.Artists ?? [])[0];
+            const key = normalizeAnswer(artist);
+            if (!key || usedPopularArtists.has(key)) return;
+            if (!groups.has(key)) groups.set(key, { key, tracks: [] });
+            groups.get(key).tracks.push(track);
+          });
+
+          if (groups.size === 0 && usedPopularArtists.size > 0) {
+            usedPopularArtists.clear();
+            continue;
+          }
+          if (groups.size === 0) break;
+
+          const artists = [...groups.values()];
+          const artistGroup = artists[Math.floor(Math.random() * artists.length)];
+          usedPopularArtists.add(artistGroup.key);
+          const candidates = artistGroup.tracks.filter(track => !usedIds.has(track.itemId ?? track.ItemId));
+          if (candidates.length === 0) continue;
+
+          const totalWeight = candidates.reduce((sum, track) => sum + Math.max(1, Number(track.deezerRank ?? track.DeezerRank) || 1), 0);
+          let ticket = Math.random() * totalWeight;
+          const selected = candidates.find(track => {
+            ticket -= Math.max(1, Number(track.deezerRank ?? track.DeezerRank) || 1);
+            return ticket <= 0;
+          }) ?? candidates[0];
+          const itemId = selected.itemId ?? selected.ItemId;
+
+          try {
+            const item = await api.getItem(userId, itemId);
+            if (!item?.Id) continue;
+            usedIds.add(item.Id);
+            return item;
+          } catch (_) {
+            continue;
+          }
+        }
+
+        throw new Error('No cached popular tracks are available for a random artist. Run Music Discovery\'s popularity scan or choose another source.');
+      }
+
       async function chooseRandomTrack() {
         const userId = api.getCurrentUserId();
         const selectedSource = sourceSelect.value;
+        if (selectedSource === 'popular') return choosePopularTrack(userId);
         const baseQuery = {
           IncludeItemTypes: 'Audio',
           Recursive: true,
@@ -975,6 +1063,8 @@
         resultsBody.replaceChildren();
         resultsSummary.hidden = true;
         totalCount = null;
+        popularTracks = null;
+        usedPopularArtists.clear();
         usedIds.clear();
         scoreLabel.textContent = '0';
         updateRoundList();
