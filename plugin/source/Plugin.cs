@@ -44,6 +44,8 @@ public sealed class PluginConfiguration : BasePluginConfiguration
 
     public int GuessingSeconds { get; set; }
 
+    public bool EnablePopularityMode { get; set; }
+
     public int PopularTrackPoolSize { get; set; } = 500;
 
     public int RevealSeconds { get; set; } = 5;

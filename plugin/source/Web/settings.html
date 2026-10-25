@@ -18,10 +18,19 @@
           <div class="fieldDescription">Time to identify the song while it plays.</div>
         </div>
 
-        <div class="inputContainer">
-          <label class="inputLabel" for="PopularTrackPoolSize">Popular-song pool size</label>
-          <input is="emby-input" id="PopularTrackPoolSize" type="number" min="1" max="5000" step="1">
-          <div class="fieldDescription">Choose how many top-ranked cached songs can be used in Most popular mode.</div>
+        <div id="PopularityModeSettings" hidden>
+          <div class="checkboxContainer">
+            <label>
+              <input is="emby-checkbox" type="checkbox" id="EnablePopularityMode">
+              <span>Enable rank-based blind tests</span>
+            </label>
+            <div class="fieldDescription">Use cached Deezer ranks for the Most popular game source.</div>
+          </div>
+          <div class="inputContainer">
+            <label class="inputLabel" for="PopularTrackPoolSize">Popular-song pool size</label>
+            <input is="emby-input" id="PopularTrackPoolSize" type="number" min="1" max="5000" step="1">
+            <div class="fieldDescription">Maximum number of cached global popularity ranks used in the game.</div>
+          </div>
         </div>
 
         <div class="inputContainer">
@@ -40,8 +49,33 @@
       const pluginId = 'dcfb6e4c-e418-4bca-9a4a-f960e991ad00';
       const page = document.querySelector('#JellyBlindTestSettingsPage');
       const form = page.querySelector('#JellyBlindTestSettingsForm');
-      const defaults = { RoundCount: 5, GuessingSeconds: 20, PopularTrackPoolSize: 500, RevealSeconds: 5 };
+      const defaults = { RoundCount: 5, GuessingSeconds: 20, EnablePopularityMode: false, PopularTrackPoolSize: 500, RevealSeconds: 5 };
       const fields = Object.keys(defaults);
+      const popularitySettings = page.querySelector('#PopularityModeSettings');
+
+      function compareVersions(left, right) {
+        const parse = value => String(value ?? '').split(/[.+-]/).slice(0, 4).map(part => Number.parseInt(part, 10) || 0);
+        const leftParts = parse(left);
+        const rightParts = parse(right);
+        for (let index = 0; index < 4; index++) {
+          const difference = (leftParts[index] ?? 0) - (rightParts[index] ?? 0);
+          if (difference !== 0) return difference;
+        }
+        return 0;
+      }
+
+      async function hasCompatibleMusicDiscovery() {
+        try {
+          const status = await ApiClient.ajax({
+            type: 'GET',
+            url: ApiClient.getUrl('mdiscover/popularity/status'),
+            dataType: 'json',
+          });
+          return compareVersions(status?.version ?? status?.Version, '0.1.15.0') > 0;
+        } catch (_) {
+          return false;
+        }
+      }
 
       function load(config) {
         fields.forEach(name => {
@@ -57,7 +91,10 @@
       page.addEventListener('pageshow', function () {
         Dashboard.showLoadingMsg();
         ApiClient.getPluginConfiguration(pluginId)
-          .then(load)
+          .then(async config => {
+            load(config);
+            popularitySettings.hidden = !(await hasCompatibleMusicDiscovery());
+          })
           .catch(() => Dashboard.alert('Could not load Blind Test settings.'))
           .finally(() => Dashboard.hideLoadingMsg());
       });
@@ -69,6 +106,7 @@
           .then(config => {
             config.RoundCount = Math.max(1, Math.min(20, parseInt(page.querySelector('#RoundCount').value, 10) || 5));
             config.GuessingSeconds = Math.max(1, Math.min(150, parseInt(page.querySelector('#GuessingSeconds').value, 10) || 20));
+            config.EnablePopularityMode = page.querySelector('#EnablePopularityMode').checked;
             config.PopularTrackPoolSize = Math.max(1, Math.min(5000, parseInt(page.querySelector('#PopularTrackPoolSize').value, 10) || 500));
             config.RevealSeconds = Math.max(1, Math.min(30, parseInt(page.querySelector('#RevealSeconds').value, 10) || 5));
             return ApiClient.updatePluginConfiguration(pluginId, config);

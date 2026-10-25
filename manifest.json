@@ -8,6 +8,14 @@
     "overview": "Adds a five-round blind test game using songs from the signed-in user's Jellyfin library.",
     "versions": [
       {
+        "version": "0.1.26.0",
+        "changelog": "- Add a JellyMusicDiscovery version-gated toggle for the artist-balanced Most popular mode.",
+        "targetAbi": "12.1.0.0",
+        "sourceUrl": "https://raw.githubusercontent.com/CooperGerman/JellyBlindTest/main/plugin/JellyBlindTest.zip",
+        "checksum": "8af927b53683a2278dd62e7c08588ce0",
+        "timestamp": "2026-10-25T15:25:36Z"
+      },
+      {
         "version": "0.1.25.0",
         "changelog": "- Add an artist-balanced Most popular mode using cached Deezer ranks and configurable top-N pool size.",
         "targetAbi": "12.1.0.0",

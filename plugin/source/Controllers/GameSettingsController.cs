@@ -25,6 +25,7 @@ public sealed class GameSettingsController : ControllerBase
         return Ok(new GameSettingsResponse(
             Math.Clamp(configuration.RoundCount, 1, 20),
             Math.Clamp(guessingSeconds, 1, 150),
+            configuration.EnablePopularityMode,
             Math.Clamp(configuration.PopularTrackPoolSize, 1, 5000),
             Math.Clamp(configuration.RevealSeconds, 1, 30)));
     }
@@ -33,5 +34,6 @@ public sealed class GameSettingsController : ControllerBase
 public sealed record GameSettingsResponse(
     int RoundCount,
     int GuessingSeconds,
+    bool EnablePopularityMode,
     int PopularTrackPoolSize,
     int RevealSeconds);

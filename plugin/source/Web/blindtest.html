@@ -378,7 +378,7 @@
           <label class="blind-source-label" for="source-select">Play from</label>
           <select class="blind-source-select" id="source-select" aria-label="Choose a music source">
             <option value="library">Whole library</option>
-            <option value="popular">Most popular (top 500)</option>
+            <option value="popular" hidden>Most popular (top 500)</option>
           </select>
           <button class="blind-button primary" id="start-button" type="button">Start test</button>
           <p class="blind-source-warning" id="source-warning" role="status" hidden></p>
@@ -446,6 +446,7 @@
       const roundList = document.getElementById('round-list');
       const scoreTotalLabel = document.getElementById('score-total');
       const sourceSelect = document.getElementById('source-select');
+      const popularSourceOption = sourceSelect.querySelector('option[value="popular"]');
       const sourceWarning = document.getElementById('source-warning');
       const countdown = document.getElementById('countdown');
       const countdownLabel = document.getElementById('countdown-label');
@@ -462,6 +463,7 @@
       let totalRounds = DEFAULT_ROUNDS;
       let guessingSeconds = DEFAULT_GUESSING_SECONDS;
       let popularTrackPoolSize = DEFAULT_POPULAR_TRACK_POOL_SIZE;
+      let popularityModeEnabled = false;
       let revealSeconds = DEFAULT_REVEAL_SECONDS;
       let currentTrack = null;
       let round = 0;
@@ -492,6 +494,17 @@
           .toLocaleLowerCase()
           .replace(/[^\p{L}\p{N}]+/gu, ' ')
           .trim();
+      }
+
+      function compareVersions(left, right) {
+        const parse = value => String(value ?? '').split(/[.+-]/).slice(0, 4).map(part => Number.parseInt(part, 10) || 0);
+        const leftParts = parse(left);
+        const rightParts = parse(right);
+        for (let index = 0; index < 4; index++) {
+          const difference = (leftParts[index] ?? 0) - (rightParts[index] ?? 0);
+          if (difference !== 0) return difference;
+        }
+        return 0;
       }
 
       function similarity(left, right) {
@@ -593,6 +606,7 @@
           });
           const configuredRounds = Number(settings?.roundCount ?? settings?.RoundCount);
           const configuredGuessing = Number(settings?.guessingSeconds ?? settings?.GuessingSeconds);
+          popularityModeEnabled = Boolean(settings?.enablePopularityMode ?? settings?.EnablePopularityMode);
           const configuredPopularPoolSize = Number(settings?.popularTrackPoolSize ?? settings?.PopularTrackPoolSize);
           const legacyPreview = Number(settings?.previewSeconds ?? settings?.PreviewSeconds);
           const legacyAnswer = Number(settings?.answerSeconds ?? settings?.AnswerSeconds);
@@ -611,7 +625,21 @@
           setResult('Using default game settings.', 'error');
         }
 
-        sourceSelect.querySelector('option[value="popular"]').textContent = 'Most popular artists';
+        let providerAvailable = false;
+        if (popularityModeEnabled) {
+          try {
+            const status = await api.ajax({
+              type: 'GET',
+              url: api.getUrl('mdiscover/popularity/status'),
+              dataType: 'json',
+            });
+            providerAvailable = compareVersions(status?.version ?? status?.Version, '0.1.15.0') > 0;
+          } catch (_) {}
+        }
+        popularSourceOption.hidden = !(popularityModeEnabled && providerAvailable);
+        popularSourceOption.textContent = 'Most popular artists (top ' + popularTrackPoolSize + ')';
+        if (popularSourceOption.hidden && sourceSelect.value === 'popular') sourceSelect.value = 'library';
+
         renderRoundSlots();
         stageCopy.textContent = totalRounds + ' random songs. ' + guessingSeconds + ' seconds to guess while each song plays.';
         updateSourceWarning();
