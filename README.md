@@ -1,8 +1,19 @@
 # JellyBlindTest
 
-A Jellyfin plugin that adds a **Blind Test** link to Jellyfin's regular user
-navigation and a separate Dashboard settings page. It chooses local library tracks at random,
-plays a short preview, and asks the player to type the song title.
+A Jellyfin plugin that adds a **Blind Test** native Home tab and a separate
+Dashboard settings page. It chooses local library tracks, plays a short preview,
+and asks the player to type the song title.
+
+## Dependencies
+
+- **File Transformation** is required to inject the Home-tab registration script
+  without modifying Jellyfin Web files. Install it from the [File Transformation
+  repository](https://github.com/IAmParadox27/jellyfin-plugin-file-transformation).
+- **Jellyfin Enhanced** is required for its Jellyfin 12 native Home-tab registry.
+  Install it from the [Jellyfin Enhanced repository](https://github.com/n00bcodr/Jellyfin-Enhanced).
+- **Music Discovery** is optional. Install the [CooperGerman fork](https://github.com/CooperGerman/JellyMusicDiscovery)
+  at a version newer than `0.1.15.0` to enable ranked-song modes. Those modes use
+  the cached Deezer popularity index; library and playlist modes work without it.
 
 ## First version
 
@@ -20,8 +31,6 @@ plays a short preview, and asks the player to type the song title.
 - The song, artist, and album artwork are revealed after each answer when
   artwork is available.
 
-Multiple choice and genre/popularity filters can be added later.
-
 The menu icon's editable SVG source is in `plugin/source/Web/blindtest-icon.svg`.
 
 ## Build
@@ -38,8 +47,8 @@ target also updates the checksum and timestamp in `manifest.json`.
 ## Install
 
 Extract `plugin/JellyBlindTest.zip` into a folder named
-`JellyBlindTest_0.1.27.0` in Jellyfin's plugins directory, then restart Jellyfin.
-The folder name must match the version in `meta.json`.
+`JellyBlindTest_<version>` in Jellyfin's plugins directory, using the version in
+`meta.json`, then restart Jellyfin.
 
 For catalog publishing, the manifest currently points at the `main` branch of
 `CooperGerman/JellyBlindTest`; publish the repository and ZIP there before

@@ -26,6 +26,14 @@ public sealed class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
     {
         yield return new PluginPageInfo
         {
+            Name = "JellyBlindTest",
+            DisplayName = "Blind Test",
+            EnableInMainMenu = true,
+            EmbeddedResourcePath = "JellyBlindTest.Web.blindtest.html",
+        };
+
+        yield return new PluginPageInfo
+        {
             Name = "JellyBlindTestSettings",
             DisplayName = "Blind Test Settings",
             EnableInMainMenu = false,

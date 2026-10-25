@@ -18,6 +18,15 @@
           <div class="fieldDescription">Time to identify the song while it plays.</div>
         </div>
 
+        <section class="inputContainer" aria-labelledby="PluginIntegrationsHeading">
+          <h3 id="PluginIntegrationsHeading">Plugin integrations</h3>
+          <div class="fieldDescription">File Transformation and Jellyfin Enhanced are required for the native Home tab.</div>
+          <div class="fieldDescription">File Transformation: <span id="FileTransformationStatus" role="status">Checking…</span> <a id="FileTransformationLink" href="https://github.com/IAmParadox27/jellyfin-plugin-file-transformation" target="_blank" rel="noopener noreferrer" hidden>Get File Transformation</a></div>
+          <div class="fieldDescription">Jellyfin Enhanced: <span id="JellyfinEnhancedStatus" role="status">Checking…</span> <a id="JellyfinEnhancedLink" href="https://github.com/n00bcodr/Jellyfin-Enhanced" target="_blank" rel="noopener noreferrer" hidden>Get Jellyfin Enhanced</a></div>
+          <h4>Optional: ranked music modes</h4>
+          <div class="fieldDescription">Music Discovery: <span id="MusicDiscoveryStatus" role="status">Checking…</span> <a id="MusicDiscoveryLink" href="https://github.com/CooperGerman/JellyMusicDiscovery" target="_blank" rel="noopener noreferrer" hidden>Get Music Discovery</a></div>
+        </section>
+
         <div id="PopularityModeSettings" hidden>
           <div class="checkboxContainer">
             <label>
@@ -52,6 +61,11 @@
       const defaults = { RoundCount: 5, GuessingSeconds: 20, EnablePopularityMode: false, PopularTrackPoolSize: 500, RevealSeconds: 5 };
       const fields = Object.keys(defaults);
       const popularitySettings = page.querySelector('#PopularityModeSettings');
+      const integrationRows = {
+        'File Transformation': ['FileTransformationStatus', 'FileTransformationLink'],
+        'Jellyfin Enhanced': ['JellyfinEnhancedStatus', 'JellyfinEnhancedLink'],
+        'Music Discovery': ['MusicDiscoveryStatus', 'MusicDiscoveryLink'],
+      };
 
       function compareVersions(left, right) {
         const parse = value => String(value ?? '').split(/[.+-]/).slice(0, 4).map(part => Number.parseInt(part, 10) || 0);
@@ -64,15 +78,54 @@
         return 0;
       }
 
-      async function hasCompatibleMusicDiscovery() {
+      function findPlugin(plugins, name, id) {
+        return plugins.find(plugin => {
+          const pluginId = plugin?.Id ?? plugin?.PluginId ?? plugin?.Guid ?? plugin?.guid;
+          const pluginName = String(plugin?.Name ?? plugin?.name ?? '').toLowerCase();
+          return String(pluginId ?? '').toLowerCase() === id.toLowerCase() || pluginName === name.toLowerCase();
+        });
+      }
+
+      function setIntegrationStatus(name, message, showLink) {
+        const [statusId, linkId] = integrationRows[name];
+        page.querySelector('#' + statusId).textContent = message;
+        page.querySelector('#' + linkId).hidden = !showLink;
+      }
+
+      async function checkPluginIntegrations() {
+        let plugins = [];
+        try {
+          const response = await ApiClient.getPlugins();
+          plugins = Array.isArray(response) ? response : response?.Items ?? response?.items ?? [];
+        } catch (_) {
+          Object.keys(integrationRows).forEach(name => setIntegrationStatus(name, 'Could not check plugin status', true));
+          return false;
+        }
+
+        const fileTransformation = findPlugin(plugins, 'File Transformation', '5e87cc92-571a-4d8d-8d98-d2d4147f9f90');
+        const jellyfinEnhanced = findPlugin(plugins, 'Jellyfin Enhanced', 'f69e946a-4b3c-4e9a-8f0a-8d7c1b2c4d9b');
+        const musicDiscovery = findPlugin(plugins, 'Music Discovery', '7b3a1c84-9a2f-4d66-8c12-5f9a8d7e6b40');
+
+        setIntegrationStatus('File Transformation', fileTransformation ? 'Installed' : 'Missing', !fileTransformation);
+        setIntegrationStatus('Jellyfin Enhanced', jellyfinEnhanced ? 'Installed' : 'Missing', !jellyfinEnhanced);
+
+        if (!musicDiscovery) {
+          setIntegrationStatus('Music Discovery', 'Not installed', true);
+          return false;
+        }
+
         try {
           const status = await ApiClient.ajax({
             type: 'GET',
             url: ApiClient.getUrl('mdiscover/popularity/status'),
             dataType: 'json',
           });
-          return compareVersions(status?.version ?? status?.Version, '0.1.15.0') > 0;
+          const version = status?.version ?? status?.Version;
+          const compatible = compareVersions(version, '0.1.15.0') > 0;
+          setIntegrationStatus('Music Discovery', compatible ? 'Ready (' + version + ')' : 'Update required (installed ' + (version || 'unknown') + ')', !compatible);
+          return compatible;
         } catch (_) {
+          setIntegrationStatus('Music Discovery', 'Installed, but rank API unavailable', true);
           return false;
         }
       }
@@ -93,7 +146,7 @@
         ApiClient.getPluginConfiguration(pluginId)
           .then(async config => {
             load(config);
-            popularitySettings.hidden = !(await hasCompatibleMusicDiscovery());
+            popularitySettings.hidden = !(await checkPluginIntegrations());
           })
           .catch(() => Dashboard.alert('Could not load Blind Test settings.'))
           .finally(() => Dashboard.hideLoadingMsg());

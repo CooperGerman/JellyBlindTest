@@ -40,7 +40,7 @@ public sealed class WebClientTransformationRegistration : BackgroundService
 
         if (!stoppingToken.IsCancellationRequested)
         {
-            _logger.LogWarning("File Transformation was not found; the Blind Test navigation link is unavailable.");
+            _logger.LogWarning("File Transformation was not found; the Blind Test Home tab is unavailable.");
         }
     }
 
@@ -66,11 +66,11 @@ public sealed class WebClientTransformationRegistration : BackgroundService
             });
             var payload = parse.Invoke(null, new object[] { payloadJson });
             register.Invoke(null, new[] { payload });
-            _logger.LogInformation("Registered the Blind Test main-menu link.");
+            _logger.LogInformation("Registered the Blind Test native Home tab script.");
         }
         catch (Exception exception)
         {
-            _logger.LogWarning(exception, "Could not register the Blind Test navigation transformation.");
+            _logger.LogWarning(exception, "Could not register the Blind Test native-tab transformation.");
         }
     }
 }

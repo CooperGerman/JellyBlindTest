@@ -2,14 +2,14 @@
   <style>
     #JellyBlindTestPage {
       color-scheme: inherit;
-      --blind-bg: var(--theme-primary-background-color, #10171b);
-      --blind-panel: var(--theme-secondary-background-color, #1b252a);
-      --blind-line: var(--theme-divider-color, #35464b);
-      --blind-text: var(--theme-primary-text-color, var(--theme-text-color, #f4f5f3));
-      --blind-muted: var(--theme-secondary-text-color, #a9b8b8);
-      --blind-accent: var(--theme-primary-color, var(--theme-accent-color, #55d6be));
-      --blind-warm: var(--theme-warning-color, #ffd166);
-      --blind-error: var(--theme-error-color, #ff8178);
+      --blind-bg: transparent;
+      --blind-panel: color-mix(in srgb, var(--jf-palette-AppBar-defaultBg, currentColor) 10%, transparent);
+      --blind-line: var(--jf-palette-divider, color-mix(in srgb, currentColor 24%, transparent));
+      --blind-text: inherit;
+      --blind-muted: color-mix(in srgb, currentColor 68%, transparent);
+      --blind-accent: var(--theme-primary-color, var(--jf-palette-primary-main, #00a4dc));
+      --blind-warm: var(--theme-warning-color, #f0ad4e);
+      --blind-error: var(--theme-error-color, #d9534f);
     }
 
     #JellyBlindTestPage * { box-sizing: border-box; }
@@ -18,9 +18,7 @@
       margin: 0;
       min-height: 100%;
       color: var(--blind-text);
-      background:
-        radial-gradient(ellipse at 80% 0%, color-mix(in srgb, var(--blind-accent) 18%, transparent), transparent 45%),
-        linear-gradient(145deg, var(--blind-bg) 0%, var(--blind-panel) 55%, var(--theme-tertiary-background-color, var(--blind-panel)) 100%);
+      background: transparent;
       font-family: system-ui, sans-serif;
     }
 
@@ -100,8 +98,7 @@
       border: 1px solid var(--blind-line);
       border-radius: 8px;
       background:
-        linear-gradient(135deg, color-mix(in srgb, var(--blind-accent) 10%, transparent), transparent 45%),
-        repeating-linear-gradient(135deg, color-mix(in srgb, var(--blind-text) 2%, transparent) 0 1px, transparent 1px 14px),
+        linear-gradient(135deg, color-mix(in srgb, var(--blind-accent) 8%, transparent), transparent 45%),
         var(--blind-panel);
       text-align: center;
     }
@@ -145,7 +142,7 @@
       aspect-ratio: 1;
       margin: 0 auto 18px;
       place-items: center;
-      border: 1px solid rgba(85, 214, 190, .45);
+      border: 1px solid color-mix(in srgb, var(--blind-accent) 45%, transparent);
       border-radius: 50%;
       color: var(--blind-accent);
       font-size: 30px;
@@ -168,10 +165,10 @@
       gap: 8px;
       margin-top: 18px;
       padding: 7px 12px;
-      border: 1px solid rgba(85, 214, 190, .36);
+      border: 1px solid color-mix(in srgb, var(--blind-accent) 36%, transparent);
       border-radius: 5px;
       color: var(--blind-accent);
-      background: rgba(16, 23, 27, .76);
+      background: color-mix(in srgb, var(--blind-bg) 76%, transparent);
       font-variant-numeric: tabular-nums;
     }
 
@@ -189,6 +186,37 @@
       align-items: center;
       gap: 10px;
       margin-top: 18px;
+    }
+
+    #JellyBlindTestPage .blind-session-settings { flex: 1 1 100%; }
+    #JellyBlindTestPage .blind-session-settings summary {
+      width: fit-content;
+      color: var(--blind-accent);
+      cursor: pointer;
+    }
+    #JellyBlindTestPage .blind-session-settings fieldset {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin: 0;
+      padding: 14px 0 4px;
+      border: 0;
+    }
+    #JellyBlindTestPage .blind-session-settings label {
+      display: grid;
+      gap: 6px;
+      color: var(--blind-muted);
+      font-size: 13px;
+    }
+    #JellyBlindTestPage .blind-session-settings input {
+      width: 100%;
+      min-height: 42px;
+      padding: 8px 10px;
+      border: 1px solid var(--blind-line);
+      border-radius: 5px;
+      color: var(--blind-text);
+      background: var(--blind-bg);
+      font: inherit;
     }
 
     #JellyBlindTestPage .blind-source-label { color: var(--blind-muted); font-size: 14px; }
@@ -228,7 +256,7 @@
 
     #JellyBlindTestPage .blind-button.primary {
       border-color: var(--blind-accent);
-      color: var(--theme-accent-text-color, #0d1b1a);
+      color: var(--theme-accent-text-color, var(--blind-text));
       background: var(--blind-accent);
     }
 
@@ -325,10 +353,15 @@
     #JellyBlindTestPage .blind-results td { min-width: 150px; padding: 12px 14px; border-bottom: 1px solid var(--blind-line); vertical-align: top; }
     #JellyBlindTestPage .blind-results th { color: var(--blind-muted); font-size: 12px; font-weight: 650; }
     #JellyBlindTestPage .blind-results td:first-child,
-    #JellyBlindTestPage .blind-results th:first-child { width: 70px; min-width: 70px; }
+    #JellyBlindTestPage .blind-results th:first-child,
+    #JellyBlindTestPage .blind-results td:first-child { width: 76px; min-width: 76px; padding: 8px; }
+    #JellyBlindTestPage .blind-results th:nth-child(2),
+    #JellyBlindTestPage .blind-results td:nth-child(2) { width: 70px; min-width: 70px; }
+    #JellyBlindTestPage .blind-results .result-artwork { display: block; width: 60px; height: 60px; object-fit: cover; border-radius: 4px; background: var(--blind-panel); }
     #JellyBlindTestPage .blind-results .expected-title { display: block; font-weight: 650; }
     #JellyBlindTestPage .blind-results .expected-artist { display: block; margin-top: 4px; color: var(--blind-muted); font-size: 13px; }
     #JellyBlindTestPage .blind-results .submitted-answer { white-space: pre-wrap; }
+    #JellyBlindTestPage .blind-results .submitted-answer.correct { color: var(--theme-success-color, #4caf50); font-weight: 650; }
 
     @media (max-width: 640px) {
       #JellyBlindTestPage .blind-shell { padding-top: 24px; }
@@ -341,6 +374,7 @@
       #JellyBlindTestPage .blind-stage { min-height: 220px; padding: 24px 16px; }
       #JellyBlindTestPage .blind-answer-row { flex-direction: column; }
       #JellyBlindTestPage .blind-source-select { flex: 1 1 100%; }
+      #JellyBlindTestPage .blind-session-settings fieldset { grid-template-columns: 1fr; }
     }
   </style>
   <div data-role="content">
@@ -383,6 +417,23 @@
           </select>
           <button class="blind-button primary" id="start-button" type="button">Start test</button>
           <p class="blind-source-warning" id="source-warning" role="status" hidden></p>
+          <details class="blind-session-settings">
+            <summary>Session settings (not saved)</summary>
+            <fieldset id="session-settings-fields">
+              <label for="session-round-count">Rounds
+                <input id="session-round-count" type="number" min="1" max="20" step="1" value="5">
+              </label>
+              <label for="session-guessing-seconds">Guessing time (seconds)
+                <input id="session-guessing-seconds" type="number" min="1" max="150" step="1" value="20">
+              </label>
+              <label for="session-reveal-seconds">Reveal time (seconds)
+                <input id="session-reveal-seconds" type="number" min="1" max="30" step="1" value="5">
+              </label>
+              <label id="session-rank-pool-setting" for="session-rank-pool-size" hidden>Ranked-song pool size
+                <input id="session-rank-pool-size" type="number" min="1" max="5000" step="1" value="500">
+              </label>
+            </fieldset>
+          </details>
         </div>
 
         <form class="blind-answer" id="answer-form" hidden>
@@ -410,7 +461,7 @@
       <div class="blind-results-wrap">
         <table aria-label="Expected and submitted answers by round">
           <thead>
-            <tr><th scope="col">Round</th><th scope="col">Expected answer</th><th scope="col">Your submitted answer</th></tr>
+            <tr><th scope="col">Artwork</th><th scope="col">Round</th><th scope="col">Expected answer</th><th scope="col">Your submitted answer</th></tr>
           </thead>
           <tbody id="results-body"></tbody>
         </table>
@@ -472,6 +523,12 @@
       const popularSourceOption = sourceSelect.querySelector('option[value="popular"]');
       const topRankedSourceOption = sourceSelect.querySelector('option[value="top-ranked"]');
       const sourceWarning = document.getElementById('source-warning');
+      const sessionSettingsFields = document.getElementById('session-settings-fields');
+      const sessionRoundsInput = document.getElementById('session-round-count');
+      const sessionGuessingInput = document.getElementById('session-guessing-seconds');
+      const sessionRevealInput = document.getElementById('session-reveal-seconds');
+      const sessionRankPoolInput = document.getElementById('session-rank-pool-size');
+      const sessionRankPoolSetting = document.getElementById('session-rank-pool-setting');
       const countdown = document.getElementById('countdown');
       const countdownLabel = document.getElementById('countdown-label');
       const countdownValue = document.getElementById('countdown-value');
@@ -592,6 +649,51 @@
         return getArtistLabels(track).map(normalizeAnswer);
       }
 
+      function getArtworkCandidates(track) {
+        const candidates = [];
+        if (track.AlbumId) {
+          candidates.push({
+            itemId: track.AlbumId,
+            tag: track.AlbumPrimaryImageTag,
+            alt: track.Album ? track.Album + ' album artwork' : 'Album artwork',
+          });
+        }
+        const artistItem = track.ArtistItems?.find(artist => artist?.Id);
+        if (artistItem) {
+          candidates.push({
+            itemId: artistItem.Id,
+            tag: artistItem.ImageTags?.Primary,
+            alt: artistItem.Name ? artistItem.Name + ' artist artwork' : 'Artist artwork',
+          });
+        }
+        return candidates;
+      }
+
+      function setArtworkSource(image, candidates, onUnavailable) {
+        if (!candidates.length) {
+          onUnavailable();
+          return;
+        }
+
+        let candidateIndex = 0;
+        image.onerror = () => {
+          candidateIndex++;
+          if (candidateIndex < candidates.length) loadCandidate();
+          else onUnavailable();
+        };
+
+        function loadCandidate() {
+          const candidate = candidates[candidateIndex];
+          image.alt = candidate.alt;
+          const options = { type: 'Primary', maxWidth: 440, quality: 90 };
+          if (candidate.tag) options.tag = candidate.tag;
+          image.src = api.getImageUrl(candidate.itemId, options);
+        }
+
+        image.hidden = false;
+        loadCandidate();
+      }
+
       async function loadTrackDetails(track) {
         if (!track?.Id) return track;
         try {
@@ -680,12 +782,14 @@
         }
         popularSourceOption.hidden = !(popularityModeEnabled && providerAvailable);
         topRankedSourceOption.hidden = popularSourceOption.hidden;
+        sessionRankPoolSetting.hidden = popularSourceOption.hidden;
         popularSourceOption.textContent = 'Most popular artists (top ' + popularTrackPoolSize + ')';
         topRankedSourceOption.textContent = 'Highest-ranked songs (top ' + popularTrackPoolSize + ')';
         if (popularSourceOption.hidden && ['popular', 'top-ranked'].includes(sourceSelect.value)) sourceSelect.value = 'library';
 
         renderRoundSlots();
         stageCopy.textContent = totalRounds + ' random songs. ' + guessingSeconds + ' seconds to guess while each song plays.';
+        populateSessionSettings();
         updateSourceWarning();
       }
 
@@ -717,6 +821,28 @@
           : 'This playlist has ' + songCount + ' song' + (songCount === 1 ? '' : 's') + ' for ' + totalRounds + ' rounds; songs may repeat.';
       }
 
+      function populateSessionSettings() {
+        sessionRoundsInput.value = String(totalRounds);
+        sessionGuessingInput.value = String(guessingSeconds);
+        sessionRevealInput.value = String(revealSeconds);
+        sessionRankPoolInput.value = String(popularTrackPoolSize);
+      }
+
+      function applySessionSettings() {
+        const readBoundedValue = (input, minimum, maximum, fallback) => {
+          const value = Number.parseInt(input.value, 10);
+          return Number.isFinite(value) ? Math.max(minimum, Math.min(maximum, value)) : fallback;
+        };
+        totalRounds = readBoundedValue(sessionRoundsInput, 1, 20, totalRounds);
+        guessingSeconds = readBoundedValue(sessionGuessingInput, 1, 150, guessingSeconds);
+        revealSeconds = readBoundedValue(sessionRevealInput, 1, 30, revealSeconds);
+        popularTrackPoolSize = readBoundedValue(sessionRankPoolInput, 1, 5000, popularTrackPoolSize);
+        populateSessionSettings();
+        renderRoundSlots();
+        stageCopy.textContent = totalRounds + ' random songs. ' + guessingSeconds + ' seconds to guess while each song plays.';
+        updateSourceWarning();
+      }
+
       async function loadPlaylists() {
         try {
           const response = await api.getItems(api.getCurrentUserId(), {
@@ -744,51 +870,11 @@
       }
 
       function showAlbumArtwork(track) {
-        const candidates = [];
-        if (track.AlbumId) {
-          candidates.push({
-            itemId: track.AlbumId,
-            tag: track.AlbumPrimaryImageTag,
-            alt: track.Album ? track.Album + ' album artwork' : 'Album artwork',
-          });
-        }
-
-        const artistItem = track.ArtistItems?.find(artist => artist?.Id);
-        if (artistItem) {
-          candidates.push({
-            itemId: artistItem.Id,
-            tag: artistItem.ImageTags?.Primary,
-            alt: artistItem.Name ? artistItem.Name + ' artist artwork' : 'Artist artwork',
-          });
-        }
-
-        if (!candidates.length) {
+        artworkContainer.hidden = false;
+        setArtworkSource(albumArt, getArtworkCandidates(track), () => {
           artworkContainer.hidden = true;
           albumArt.removeAttribute('src');
-          return;
-        }
-
-        let candidateIndex = 0;
-        albumArt.onerror = () => {
-          candidateIndex++;
-          if (candidateIndex < candidates.length) {
-            loadArtworkCandidate();
-          } else {
-            artworkContainer.hidden = true;
-            albumArt.removeAttribute('src');
-          }
-        };
-
-        function loadArtworkCandidate() {
-          const candidate = candidates[candidateIndex];
-          albumArt.alt = candidate.alt;
-          const imageOptions = { type: 'Primary', maxWidth: 440, quality: 90 };
-          if (candidate.tag) imageOptions.tag = candidate.tag;
-          albumArt.src = api.getImageUrl(candidate.itemId, imageOptions);
-        }
-
-        artworkContainer.hidden = false;
-        loadArtworkCandidate();
+        });
       }
 
       function clearCountdown() {
@@ -874,27 +960,39 @@
         roundHeading.textContent = 'Final score';
         setResult('');
         sourceSelect.disabled = false;
+        sessionSettingsFields.disabled = false;
       }
 
       function renderResults() {
         resultsBody.replaceChildren();
         roundResults.forEach((roundResult, index) => {
           const row = document.createElement('tr');
+          const artworkCell = document.createElement('td');
           const roundCell = document.createElement('td');
           const expectedCell = document.createElement('td');
           const answerCell = document.createElement('td');
+          const artwork = document.createElement('img');
           const title = document.createElement('span');
           const artist = document.createElement('span');
 
+          artwork.className = 'result-artwork';
+          artwork.alt = '';
+          artwork.loading = 'lazy';
+          artworkCell.append(artwork);
+          setArtworkSource(artwork, roundResult.artworkCandidates ?? [], () => {
+            artwork.hidden = true;
+            artwork.removeAttribute('src');
+          });
           roundCell.textContent = String(index + 1).padStart(2, '0');
           title.className = 'expected-title';
           title.textContent = roundResult.title;
           artist.className = 'expected-artist';
           artist.textContent = roundResult.artist || 'Unknown artist';
           answerCell.className = 'submitted-answer';
+          if (roundResult.songMatched || roundResult.artistMatched) answerCell.classList.add('correct');
           answerCell.textContent = roundResult.submittedAnswer || 'No answer submitted';
           expectedCell.append(title, artist);
-          row.append(roundCell, expectedCell, answerCell);
+          row.append(artworkCell, roundCell, expectedCell, answerCell);
           resultsBody.append(row);
         });
         resultsSummary.hidden = false;
@@ -1103,6 +1201,7 @@
           roundResults[round - 1] = {
             title: currentTrack.Name,
             artist: getArtistLabels(currentTrack).join(', '),
+            artworkCandidates: getArtworkCandidates(currentTrack),
             submittedAnswer: '',
             songMatched: false,
             artistMatched: false,
@@ -1137,6 +1236,7 @@
           answerInput.disabled = true;
           submitButton.disabled = true;
           sourceSelect.disabled = false;
+          sessionSettingsFields.disabled = false;
           stageTitle.textContent = 'Could not start this round';
           stageCopy.textContent = error?.message ?? 'The song library could not be read.';
           startButton.hidden = false;
@@ -1222,6 +1322,8 @@
       }
 
       startButton.addEventListener('click', () => {
+        applySessionSettings();
+        sessionSettingsFields.disabled = true;
         round = 0;
         score = 0;
         roundResults.length = 0;

@@ -8,6 +8,38 @@
     "overview": "Adds a five-round blind test game using songs from the signed-in user's Jellyfin library.",
     "versions": [
       {
+        "version": "0.1.33.0",
+        "changelog": "- Add album artwork, with artist-image fallback, as the leftmost column in the final recap.",
+        "targetAbi": "12.1.0.0",
+        "sourceUrl": "https://raw.githubusercontent.com/CooperGerman/JellyBlindTest/main/plugin/JellyBlindTest.zip",
+        "checksum": "a8136deea39d2478cda0b7368daf4cb3",
+        "timestamp": "2026-10-25T22:33:39Z"
+      },
+      {
+        "version": "0.1.32.0",
+        "changelog": "- Add non-persistent per-session settings for rounds, guess/reveal timing, and ranked pool size.\n- Highlight recap answers that earned points.\n- Show required File Transformation/Jellyfin Enhanced and optional ranked Music Discovery status with links.",
+        "targetAbi": "12.1.0.0",
+        "sourceUrl": "https://raw.githubusercontent.com/CooperGerman/JellyBlindTest/main/plugin/JellyBlindTest.zip",
+        "checksum": "191d3dc574a537ffdb0daeee00d9ab09",
+        "timestamp": "2026-10-25T22:30:55Z"
+      },
+      {
+        "version": "0.1.31.0",
+        "changelog": "- Add Blind Test as a native Jellyfin 12 Home tab via Jellyfin Enhanced's native-tabs registry.\n- Mount the game directly in the Home tab so it inherits the Jellyfin theme without an iframe.",
+        "targetAbi": "12.1.0.0",
+        "sourceUrl": "https://raw.githubusercontent.com/CooperGerman/JellyBlindTest/main/plugin/JellyBlindTest.zip",
+        "checksum": "b20a3c9f4dce439e24d969417d15bd57",
+        "timestamp": "2026-10-25T22:15:33Z"
+      },
+      {
+        "version": "0.1.30.0",
+        "changelog": "- Add Blind Test as a native Jellyfin main-menu page instead of an iframe overlay.\n- Inherit Jellyfin's active theme in the game page.",
+        "targetAbi": "12.1.0.0",
+        "sourceUrl": "https://raw.githubusercontent.com/CooperGerman/JellyBlindTest/main/plugin/JellyBlindTest.zip",
+        "checksum": "7b6a576750273110892126acf4c22d9e",
+        "timestamp": "2026-10-25T21:54:49Z"
+      },
+      {
         "version": "0.1.29.0",
         "changelog": "- Use Jellyfin's active theme in the game page.\n- Fall back from album artwork to artist artwork, hiding artwork when neither is available.",
         "targetAbi": "12.1.0.0",

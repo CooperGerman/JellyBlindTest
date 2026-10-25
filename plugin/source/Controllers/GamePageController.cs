@@ -9,6 +9,8 @@ namespace JellyBlindTest.Controllers;
 public sealed class GamePageController : ControllerBase
 {
     private const string PageResourceName = "JellyBlindTest.Web.blindtest.html";
+    private const string GameScriptStart = "<script>";
+    private const string GameScriptEnd = "</script>";
     private const string IconResourceName = "JellyBlindTest.Web.blindtest-icon.svg";
 
     [HttpGet("page")]
@@ -21,6 +23,26 @@ public sealed class GamePageController : ControllerBase
 
         using var reader = new StreamReader(stream);
         return Content(reader.ReadToEnd(), "text/html; charset=utf-8");
+    }
+
+    [HttpGet("game.js")]
+    [AllowAnonymous]
+    [Produces("application/javascript")]
+    public IActionResult GetGameScript()
+    {
+        using var stream = typeof(GamePageController).Assembly.GetManifestResourceStream(PageResourceName);
+        if (stream is null) return NotFound();
+
+        using var reader = new StreamReader(stream);
+        var page = reader.ReadToEnd();
+        var start = page.IndexOf(GameScriptStart, StringComparison.OrdinalIgnoreCase);
+        if (start < 0) return NotFound();
+        start += GameScriptStart.Length;
+
+        var end = page.IndexOf(GameScriptEnd, start, StringComparison.OrdinalIgnoreCase);
+        if (end < 0) return NotFound();
+
+        return Content(page[start..end], "application/javascript; charset=utf-8");
     }
 
     [HttpGet("icon.svg")]
