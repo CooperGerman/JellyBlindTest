@@ -8,12 +8,28 @@
     "overview": "Adds a five-round blind test game using songs from the signed-in user's Jellyfin library.",
     "versions": [
       {
+        "version": "0.1.29.0",
+        "changelog": "- Use Jellyfin's active theme in the game page.\n- Fall back from album artwork to artist artwork, hiding artwork when neither is available.",
+        "targetAbi": "12.1.0.0",
+        "sourceUrl": "https://raw.githubusercontent.com/CooperGerman/JellyBlindTest/main/plugin/JellyBlindTest.zip",
+        "checksum": "a5931c7894c9e647f02ed07d46a57f98",
+        "timestamp": "2026-10-25T19:06:34Z"
+      },
+      {
+        "version": "0.1.28.0",
+        "changelog": "- Show the song title, artist, and album artwork clearly during reveal, including popular-track mode.\n- Add a global highest-ranked songs mode alongside artist-balanced popularity mode.",
+        "targetAbi": "12.1.0.0",
+        "sourceUrl": "https://raw.githubusercontent.com/CooperGerman/JellyBlindTest/main/plugin/JellyBlindTest.zip",
+        "checksum": "73d3e22d89b1e2cf9f27b070ba88d003",
+        "timestamp": "2026-10-25T18:58:59Z"
+      },
+      {
         "version": "0.1.27.0",
         "changelog": "- Add Up/Down navigation through submitted answer history while the guessing phase is active.",
         "targetAbi": "12.1.0.0",
         "sourceUrl": "https://raw.githubusercontent.com/CooperGerman/JellyBlindTest/main/plugin/JellyBlindTest.zip",
-        "checksum": "ae14664fa407f0c221aa1d20a197fe7f",
-        "timestamp": "2026-10-25T15:31:46Z"
+        "checksum": "a5dae6a935d0f5bf55047baa638063f5",
+        "timestamp": "2026-10-25T18:58:16Z"
       },
       {
         "version": "0.1.26.0",

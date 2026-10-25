@@ -1,15 +1,15 @@
 <div id="JellyBlindTestPage" data-role="page" class="page type-interior pluginConfigurationPage">
   <style>
     #JellyBlindTestPage {
-      color-scheme: dark;
-      --blind-bg: #10171b;
-      --blind-panel: #1b252a;
-      --blind-line: #35464b;
-      --blind-text: #f4f5f3;
-      --blind-muted: #a9b8b8;
-      --blind-accent: #55d6be;
-      --blind-warm: #ffd166;
-      --blind-error: #ff8178;
+      color-scheme: inherit;
+      --blind-bg: var(--theme-primary-background-color, #10171b);
+      --blind-panel: var(--theme-secondary-background-color, #1b252a);
+      --blind-line: var(--theme-divider-color, #35464b);
+      --blind-text: var(--theme-primary-text-color, var(--theme-text-color, #f4f5f3));
+      --blind-muted: var(--theme-secondary-text-color, #a9b8b8);
+      --blind-accent: var(--theme-primary-color, var(--theme-accent-color, #55d6be));
+      --blind-warm: var(--theme-warning-color, #ffd166);
+      --blind-error: var(--theme-error-color, #ff8178);
     }
 
     #JellyBlindTestPage * { box-sizing: border-box; }
@@ -19,8 +19,8 @@
       min-height: 100%;
       color: var(--blind-text);
       background:
-        radial-gradient(ellipse at 80% 0%, rgba(62, 112, 107, .23), transparent 45%),
-        linear-gradient(145deg, #10171b 0%, #152126 55%, #25201b 100%);
+        radial-gradient(ellipse at 80% 0%, color-mix(in srgb, var(--blind-accent) 18%, transparent), transparent 45%),
+        linear-gradient(145deg, var(--blind-bg) 0%, var(--blind-panel) 55%, var(--theme-tertiary-background-color, var(--blind-panel)) 100%);
       font-family: system-ui, sans-serif;
     }
 
@@ -100,8 +100,8 @@
       border: 1px solid var(--blind-line);
       border-radius: 8px;
       background:
-        linear-gradient(135deg, rgba(85, 214, 190, .08), transparent 45%),
-        repeating-linear-gradient(135deg, rgba(255,255,255,.018) 0 1px, transparent 1px 14px),
+        linear-gradient(135deg, color-mix(in srgb, var(--blind-accent) 10%, transparent), transparent 45%),
+        repeating-linear-gradient(135deg, color-mix(in srgb, var(--blind-text) 2%, transparent) 0 1px, transparent 1px 14px),
         var(--blind-panel);
       text-align: center;
     }
@@ -111,7 +111,7 @@
       z-index: 0;
       inset: 0;
       overflow: hidden;
-      opacity: .23;
+      opacity: .45;
       pointer-events: none;
     }
 
@@ -120,7 +120,7 @@
     #JellyBlindTestPage .blind-stage-artwork::after {
       position: absolute;
       inset: 0;
-      background: rgba(16, 23, 27, .52);
+      background: color-mix(in srgb, var(--blind-bg) 38%, transparent);
       content: '';
     }
 
@@ -199,7 +199,7 @@
       border: 1px solid var(--blind-line);
       border-radius: 5px;
       color: var(--blind-text);
-      background: #121a1e;
+      background: var(--blind-bg);
       font: inherit;
     }
     #JellyBlindTestPage .blind-source-warning {
@@ -220,7 +220,7 @@
       border: 1px solid var(--blind-line);
       border-radius: 5px;
       color: var(--blind-text);
-      background: #243238;
+      background: var(--blind-panel);
       font: inherit;
       font-weight: 650;
       cursor: pointer;
@@ -228,7 +228,7 @@
 
     #JellyBlindTestPage .blind-button.primary {
       border-color: var(--blind-accent);
-      color: #0d1b1a;
+      color: var(--theme-accent-text-color, #0d1b1a);
       background: var(--blind-accent);
     }
 
@@ -258,7 +258,7 @@
       border-radius: 5px;
       outline: none;
       color: var(--blind-text);
-      background: #121a1e;
+      background: var(--blind-bg);
       font: inherit;
     }
 
@@ -279,7 +279,7 @@
     #JellyBlindTestPage .blind-rail {
       padding: 18px;
       border-top: 3px solid var(--blind-warm);
-      background: rgba(16, 23, 27, .7);
+      background: var(--blind-panel);
     }
 
     #JellyBlindTestPage .blind-rail h2 {
@@ -301,7 +301,7 @@
       display: flex;
       justify-content: space-between;
       padding: 8px 0;
-      border-bottom: 1px solid rgba(169, 184, 184, .17);
+      border-bottom: 1px solid var(--blind-line);
       color: var(--blind-muted);
       font-size: 13px;
     }
@@ -378,7 +378,8 @@
           <label class="blind-source-label" for="source-select">Play from</label>
           <select class="blind-source-select" id="source-select" aria-label="Choose a music source">
             <option value="library">Whole library</option>
-            <option value="popular" hidden>Most popular (top 500)</option>
+            <option value="popular" hidden>Most popular artists (top 500)</option>
+            <option value="top-ranked" hidden>Highest-ranked songs (top 500)</option>
           </select>
           <button class="blind-button primary" id="start-button" type="button">Start test</button>
           <p class="blind-source-warning" id="source-warning" role="status" hidden></p>
@@ -422,6 +423,27 @@
     (function () {
       'use strict';
 
+      function inheritJellyfinTheme() {
+        if (window.parent === window) return;
+        try {
+          const parentDocument = window.parent.document;
+          [parentDocument.documentElement, parentDocument.body].forEach(element => {
+            if (!element) return;
+            const computed = window.parent.getComputedStyle(element);
+            for (let index = 0; index < computed.length; index++) {
+              const property = computed.item(index);
+              if (!property.startsWith('--')) continue;
+              const value = computed.getPropertyValue(property).trim();
+              if (value) document.documentElement.style.setProperty(property, value);
+            }
+          });
+          const colorScheme = window.parent.getComputedStyle(parentDocument.documentElement).colorScheme;
+          if (colorScheme && colorScheme !== 'normal') document.documentElement.style.colorScheme = colorScheme;
+        } catch (_) {}
+      }
+
+      inheritJellyfinTheme();
+
       const PLUGIN_ID = 'dcfb6e4c-e418-4bca-9a4a-f960e991ad00';
       const DEFAULT_ROUNDS = 5;
       const DEFAULT_GUESSING_SECONDS = 20;
@@ -448,6 +470,7 @@
       const scoreTotalLabel = document.getElementById('score-total');
       const sourceSelect = document.getElementById('source-select');
       const popularSourceOption = sourceSelect.querySelector('option[value="popular"]');
+      const topRankedSourceOption = sourceSelect.querySelector('option[value="top-ranked"]');
       const sourceWarning = document.getElementById('source-warning');
       const countdown = document.getElementById('countdown');
       const countdownLabel = document.getElementById('countdown-label');
@@ -569,6 +592,21 @@
         return getArtistLabels(track).map(normalizeAnswer);
       }
 
+      async function loadTrackDetails(track) {
+        if (!track?.Id) return track;
+        try {
+          const response = await api.getItems(api.getCurrentUserId(), {
+            Ids: [track.Id],
+            Limit: 1,
+            Fields: 'Tags,ImageTags,AlbumPrimaryImageTag,AlbumId,Album,AlbumArtist,Artists,AlbumArtists,ArtistItems',
+          });
+          const details = response?.Items?.[0];
+          return details ? { ...track, ...details } : track;
+        } catch (_) {
+          return track;
+        }
+      }
+
       function updateRoundList() {
         [...roundList.children].forEach((item, index) => {
           item.classList.toggle('current', index === round - 1 && !roundRevealed);
@@ -641,8 +679,10 @@
           } catch (_) {}
         }
         popularSourceOption.hidden = !(popularityModeEnabled && providerAvailable);
+        topRankedSourceOption.hidden = popularSourceOption.hidden;
         popularSourceOption.textContent = 'Most popular artists (top ' + popularTrackPoolSize + ')';
-        if (popularSourceOption.hidden && sourceSelect.value === 'popular') sourceSelect.value = 'library';
+        topRankedSourceOption.textContent = 'Highest-ranked songs (top ' + popularTrackPoolSize + ')';
+        if (popularSourceOption.hidden && ['popular', 'top-ranked'].includes(sourceSelect.value)) sourceSelect.value = 'library';
 
         renderRoundSlots();
         stageCopy.textContent = totalRounds + ' random songs. ' + guessingSeconds + ' seconds to guess while each song plays.';
@@ -653,7 +693,13 @@
         const selectedOption = sourceSelect.selectedOptions[0];
         if (sourceSelect.value === 'popular') {
           sourceWarning.hidden = false;
-          sourceWarning.textContent = 'Random artists, songs weighted by Deezer rank within the global top ' + popularTrackPoolSize + '. Run Music Discovery\'s popularity scan if needed.';
+          sourceWarning.textContent = 'Artists are balanced; songs are weighted by Deezer rank within the global top ' + popularTrackPoolSize + '. Run Music Discovery\'s popularity scan if needed.';
+          return;
+        }
+
+        if (sourceSelect.value === 'top-ranked') {
+          sourceWarning.hidden = false;
+          sourceWarning.textContent = 'Songs are weighted by Deezer rank across the global top ' + popularTrackPoolSize + '; artists are not balanced.';
           return;
         }
 
@@ -698,23 +744,51 @@
       }
 
       function showAlbumArtwork(track) {
-        const imageTag = track.AlbumPrimaryImageTag || track.ImageTags?.Primary;
-        const imageItemId = track.AlbumId || track.Id;
-        if (!imageTag || !imageItemId) {
+        const candidates = [];
+        if (track.AlbumId) {
+          candidates.push({
+            itemId: track.AlbumId,
+            tag: track.AlbumPrimaryImageTag,
+            alt: track.Album ? track.Album + ' album artwork' : 'Album artwork',
+          });
+        }
+
+        const artistItem = track.ArtistItems?.find(artist => artist?.Id);
+        if (artistItem) {
+          candidates.push({
+            itemId: artistItem.Id,
+            tag: artistItem.ImageTags?.Primary,
+            alt: artistItem.Name ? artistItem.Name + ' artist artwork' : 'Artist artwork',
+          });
+        }
+
+        if (!candidates.length) {
           artworkContainer.hidden = true;
           albumArt.removeAttribute('src');
           return;
         }
 
-        albumArt.alt = track.Album ? track.Album + ' album artwork' : 'Album artwork';
-        albumArt.onerror = () => { artworkContainer.hidden = true; };
-        albumArt.src = api.getImageUrl(imageItemId, {
-          type: 'Primary',
-          tag: imageTag,
-          maxWidth: 440,
-          quality: 90,
-        });
+        let candidateIndex = 0;
+        albumArt.onerror = () => {
+          candidateIndex++;
+          if (candidateIndex < candidates.length) {
+            loadArtworkCandidate();
+          } else {
+            artworkContainer.hidden = true;
+            albumArt.removeAttribute('src');
+          }
+        };
+
+        function loadArtworkCandidate() {
+          const candidate = candidates[candidateIndex];
+          albumArt.alt = candidate.alt;
+          const imageOptions = { type: 'Primary', maxWidth: 440, quality: 90 };
+          if (candidate.tag) imageOptions.tag = candidate.tag;
+          albumArt.src = api.getImageUrl(candidate.itemId, imageOptions);
+        }
+
         artworkContainer.hidden = false;
+        loadArtworkCandidate();
       }
 
       function clearCountdown() {
@@ -846,7 +920,7 @@
         answerInput.setSelectionRange(answerInput.value.length, answerInput.value.length);
       }
 
-      async function choosePopularTrack(userId) {
+      async function loadPopularTracks() {
         if (popularTracks === null) {
           const response = await api.ajax({
             type: 'GET',
@@ -863,6 +937,19 @@
             sourceWarning.textContent = 'Only ' + popularTracks.length + ' of ' + popularTrackPoolSize + ' ranked songs are cached. Run Music Discovery\'s popularity scan to expand the pool.';
           }
         }
+      }
+
+      function chooseWeightedTrack(candidates) {
+        const totalWeight = candidates.reduce((sum, track) => sum + Math.max(1, Number(track.deezerRank ?? track.DeezerRank) || 1), 0);
+        let ticket = Math.random() * totalWeight;
+        return candidates.find(track => {
+          ticket -= Math.max(1, Number(track.deezerRank ?? track.DeezerRank) || 1);
+          return ticket <= 0;
+        }) ?? candidates[0];
+      }
+
+      async function choosePopularTrack(userId) {
+        await loadPopularTracks();
 
         totalCount = popularTracks.length;
         if (totalCount < 1) {
@@ -895,12 +982,7 @@
           const candidates = artistGroup.tracks.filter(track => !usedIds.has(track.itemId ?? track.ItemId));
           if (candidates.length === 0) continue;
 
-          const totalWeight = candidates.reduce((sum, track) => sum + Math.max(1, Number(track.deezerRank ?? track.DeezerRank) || 1), 0);
-          let ticket = Math.random() * totalWeight;
-          const selected = candidates.find(track => {
-            ticket -= Math.max(1, Number(track.deezerRank ?? track.DeezerRank) || 1);
-            return ticket <= 0;
-          }) ?? candidates[0];
+          const selected = chooseWeightedTrack(candidates);
           const itemId = selected.itemId ?? selected.ItemId;
 
           try {
@@ -916,10 +998,36 @@
         throw new Error('No cached popular tracks are available for a random artist. Run Music Discovery\'s popularity scan or choose another source.');
       }
 
+      async function chooseTopRankedTrack(userId) {
+        await loadPopularTracks();
+
+        totalCount = popularTracks.length;
+        if (totalCount < 1) {
+          throw new Error('No globally ranked songs are cached. Run Music Discovery\'s Deezer popularity scan first.');
+        }
+        if (usedIds.size >= totalCount) usedIds.clear();
+
+        const candidates = popularTracks.filter(track => !usedIds.has(track.itemId ?? track.ItemId));
+        while (candidates.length) {
+          const selected = chooseWeightedTrack(candidates);
+          candidates.splice(candidates.indexOf(selected), 1);
+          const itemId = selected.itemId ?? selected.ItemId;
+          try {
+            const item = await api.getItem(userId, itemId);
+            if (!item?.Id) continue;
+            usedIds.add(item.Id);
+            return item;
+          } catch (_) {}
+        }
+
+        throw new Error('No cached top-ranked songs are available. Run Music Discovery\'s popularity scan or choose another source.');
+      }
+
       async function chooseRandomTrack() {
         const userId = api.getCurrentUserId();
         const selectedSource = sourceSelect.value;
         if (selectedSource === 'popular') return choosePopularTrack(userId);
+        if (selectedSource === 'top-ranked') return chooseTopRankedTrack(userId);
         const baseQuery = {
           IncludeItemTypes: 'Audio',
           Recursive: true,
@@ -990,7 +1098,7 @@
         stageCopy.textContent = 'One moment.';
 
         try {
-          currentTrack = await chooseRandomTrack();
+          currentTrack = await loadTrackDetails(await chooseRandomTrack());
           round++;
           roundResults[round - 1] = {
             title: currentTrack.Name,
@@ -1049,10 +1157,10 @@
 
         const artist = getArtistLabels(currentTrack).join(', ') || 'Unknown artist';
         if (timedOut) {
-          stageTitle.textContent = 'Time is up';
           setResult('No answer submitted. The song was:', 'incorrect');
         }
-        stageCopy.textContent = currentTrack.Name + ' — ' + artist;
+        stageTitle.textContent = currentTrack.Name || 'Unknown song';
+        stageCopy.textContent = artist;
         showAlbumArtwork(currentTrack);
         updateRoundList();
       }
