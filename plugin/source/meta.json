@@ -5,7 +5,7 @@
   "overview": "Adds a five-round blind test game using songs from the signed-in user's Jellyfin library.",
   "owner": "self-hosted",
   "category": "General",
-  "version": "0.1.33.0",
+  "version": "0.1.35.0",
   "targetAbi": "12.1.0.0",
   "framework": "net10.0",
   "assemblies": ["JellyBlindTest.dll"],

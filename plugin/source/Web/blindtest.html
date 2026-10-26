@@ -272,6 +272,12 @@
       font-size: 14px;
     }
 
+    #JellyBlindTestPage .blind-answer-hint {
+      margin: 8px 0 0;
+      color: var(--blind-muted);
+      font-size: 12px;
+    }
+
     #JellyBlindTestPage .blind-answer-row {
       display: flex;
       gap: 9px;
@@ -303,6 +309,17 @@
     #JellyBlindTestPage .blind-result.correct { color: var(--blind-accent); }
     #JellyBlindTestPage .blind-result.incorrect { color: var(--blind-warm); }
     #JellyBlindTestPage .blind-result.error { color: var(--blind-error); }
+    #JellyBlindTestPage .blind-match-badge {
+      display: inline-block;
+      margin-left: 7px;
+      padding: 2px 7px;
+      border: 1px solid color-mix(in srgb, var(--theme-success-color, #4caf50) 55%, transparent);
+      border-radius: 4px;
+      color: var(--theme-success-color, #4caf50);
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1.4;
+    }
 
     #JellyBlindTestPage .blind-rail {
       padding: 18px;
@@ -442,6 +459,7 @@
             <input id="answer-input" name="answer" type="text" autocomplete="off" placeholder="Type the song title or artist" disabled>
             <button class="blind-button" id="submit-button" type="submit" disabled>Check answer</button>
           </div>
+          <p class="blind-answer-hint">Guesses accumulate during the round; separate entries can combine to make a match.</p>
         </form>
         <p class="blind-result" id="result" role="status" aria-live="polite"></p>
         <audio id="audio" preload="none"></audio>
@@ -566,9 +584,18 @@
       const resultsSummary = document.getElementById('results-summary');
       const resultsBody = document.getElementById('results-body');
 
-      function setResult(message, tone) {
-        result.textContent = message;
+      function setResult(message, tone, matches) {
+        result.replaceChildren(document.createTextNode(message));
         result.className = 'blind-result' + (tone ? ' ' + tone : '');
+        if (matches?.songMatched) appendMatchBadge('Song');
+        if (matches?.artistMatched) appendMatchBadge('Artist');
+      }
+
+      function appendMatchBadge(label) {
+        const badge = document.createElement('span');
+        badge.className = 'blind-match-badge';
+        badge.textContent = label;
+        result.append(badge);
       }
 
       function normalizeAnswer(value) {
@@ -990,7 +1017,9 @@
           artist.textContent = roundResult.artist || 'Unknown artist';
           answerCell.className = 'submitted-answer';
           if (roundResult.songMatched || roundResult.artistMatched) answerCell.classList.add('correct');
-          answerCell.textContent = roundResult.submittedAnswer || 'No answer submitted';
+          answerCell.textContent = roundResult.submittedAnswers?.length
+            ? roundResult.submittedAnswers.join('\n')
+            : 'No answer submitted';
           expectedCell.append(title, artist);
           row.append(artworkCell, roundCell, expectedCell, answerCell);
           resultsBody.append(row);
@@ -1188,7 +1217,9 @@
         sourceSelect.disabled = true;
         currentTrack = null;
         startButton.hidden = true;
-        answerForm.hidden = true;
+        answerForm.hidden = round === 0;
+        answerInput.disabled = true;
+        submitButton.disabled = true;
         artworkContainer.hidden = true;
         albumArt.removeAttribute('src');
         setResult('Finding a random song…');
@@ -1202,7 +1233,7 @@
             title: currentTrack.Name,
             artist: getArtistLabels(currentTrack).join(', '),
             artworkCandidates: getArtworkCandidates(currentTrack),
-            submittedAnswer: '',
+            submittedAnswers: [],
             songMatched: false,
             artistMatched: false,
           };
@@ -1251,9 +1282,10 @@
         if (!currentTrack) return;
         submitted = true;
         roundRevealed = true;
-        answerForm.hidden = true;
+        answerForm.hidden = false;
         answerInput.disabled = true;
         submitButton.disabled = true;
+        answerInput.placeholder = 'Guessing time is over';
 
         const artist = getArtistLabels(currentTrack).join(', ') || 'Unknown artist';
         if (timedOut) {
@@ -1266,6 +1298,7 @@
       }
 
       async function beginRevealPhase(timedOut) {
+        clearCountdown();
         revealAnswer(timedOut);
 
         countdownLabel.textContent = 'Next song in';
@@ -1283,8 +1316,8 @@
       function submitAnswer(event) {
         event.preventDefault();
         if (!currentTrack || roundRevealed) return;
-        const guess = normalizeAnswer(answerInput.value);
-        if (!guess) {
+        const submittedAnswer = answerInput.value.trim();
+        if (!normalizeAnswer(submittedAnswer)) {
           setResult('Enter a song title and/or artist.', 'error');
           answerInput.focus();
           return;
@@ -1292,8 +1325,8 @@
 
         submitted = true;
         const roundResult = roundResults[round - 1];
-        const submittedAnswer = answerInput.value.trim();
-        roundResult.submittedAnswer = submittedAnswer;
+        roundResult.submittedAnswers.push(submittedAnswer);
+        const guess = normalizeAnswer(roundResult.submittedAnswers.join(' '));
         if (answerHistory[answerHistory.length - 1] !== submittedAnswer) answerHistory.push(submittedAnswer);
         if (answerHistory.length > MAX_ANSWER_HISTORY) answerHistory.shift();
         answerHistoryIndex = answerHistory.length;
@@ -1316,14 +1349,20 @@
           ? 'Matched ' + [newSongPoint ? 'song' : '', newArtistPoint ? 'artist' : ''].filter(Boolean).join(' and ') + '. +' + points + (points === 1 ? ' point. Keep guessing.' : ' points. Keep guessing.')
           : matchedCategories.length
             ? 'Already earned the ' + matchedCategories.join(' and ') + ' point. Keep guessing for another match.'
-            : 'No match yet. Keep trying until the timer ends.', points ? 'correct' : '');
+            : 'No match yet. Keep trying until the timer ends.', points ? 'correct' : '', roundResult);
         answerInput.value = '';
+        if (roundResult.songMatched && roundResult.artistMatched) {
+          setResult('Both matched. Revealing the answer.', 'correct', roundResult);
+          beginRevealPhase(false);
+          return;
+        }
         answerInput.focus();
       }
 
       startButton.addEventListener('click', () => {
         applySessionSettings();
         sessionSettingsFields.disabled = true;
+        answerInput.placeholder = 'Type the song title or artist';
         round = 0;
         score = 0;
         roundResults.length = 0;
