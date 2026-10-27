@@ -8,6 +8,14 @@
     "overview": "Adds a five-round blind test game using songs from the signed-in user's Jellyfin library.",
     "versions": [
       {
+        "version": "0.1.36.0",
+        "changelog": "- Add a live music-volume slider that controls playback and crossfades.",
+        "targetAbi": "12.1.0.0",
+        "sourceUrl": "https://raw.githubusercontent.com/CooperGerman/JellyBlindTest/main/plugin/JellyBlindTest.zip",
+        "checksum": "3857a08faf3a82ea256fb4fd3df51d0d",
+        "timestamp": "2026-10-27T20:14:42Z"
+      },
+      {
         "version": "0.1.35.0",
         "changelog": "- Show green Song and Artist match badges as guesses are found.\n- Reveal the answer immediately when both have been matched.",
         "targetAbi": "12.1.0.0",

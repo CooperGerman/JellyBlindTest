@@ -159,6 +159,24 @@
       line-height: 1.5;
     }
 
+    #JellyBlindTestPage .blind-match-badges {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    #JellyBlindTestPage .blind-match-badges[hidden] { display: none; }
+    #JellyBlindTestPage .blind-match-badge {
+      padding: 5px 10px;
+      border: 1px solid color-mix(in srgb, var(--theme-success-color, #4caf50) 55%, transparent);
+      border-radius: 5px;
+      color: var(--theme-success-color, #4caf50);
+      background: color-mix(in srgb, var(--theme-success-color, #4caf50) 12%, transparent);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
     #JellyBlindTestPage .blind-countdown {
       display: inline-flex;
       align-items: baseline;
@@ -187,6 +205,17 @@
       gap: 10px;
       margin-top: 18px;
     }
+
+    #JellyBlindTestPage .blind-volume-label {
+      display: inline-flex;
+      min-height: 44px;
+      align-items: center;
+      gap: 8px;
+      color: var(--blind-muted);
+      font-size: 13px;
+    }
+    #JellyBlindTestPage .blind-volume-label input { width: 120px; accent-color: var(--blind-accent); }
+    #JellyBlindTestPage .blind-volume-label output { min-width: 3ch; color: var(--blind-text); font-variant-numeric: tabular-nums; }
 
     #JellyBlindTestPage .blind-session-settings { flex: 1 1 100%; }
     #JellyBlindTestPage .blind-session-settings summary {
@@ -417,6 +446,7 @@
             <div class="blind-stage-mark" aria-hidden="true">♪</div>
             <h2 id="stage-title">Ready when you are</h2>
             <p id="stage-copy">Five random songs. Enter the title and/or artist while each song plays.</p>
+            <div class="blind-match-badges" id="match-badges" aria-live="polite" hidden></div>
             <div class="blind-countdown" id="countdown" aria-live="off" hidden>
               <span id="countdown-label">Music</span>
               <strong id="countdown-value">5</strong>
@@ -433,6 +463,10 @@
             <option value="top-ranked" hidden>Highest-ranked songs (top 500)</option>
           </select>
           <button class="blind-button primary" id="start-button" type="button">Start test</button>
+          <label class="blind-volume-label" for="music-volume">Music volume
+            <input id="music-volume" type="range" min="0" max="100" step="1" value="100" aria-label="Music volume">
+            <output id="music-volume-value" for="music-volume">100%</output>
+          </label>
           <p class="blind-source-warning" id="source-warning" role="status" hidden></p>
           <details class="blind-session-settings">
             <summary>Session settings (not saved)</summary>
@@ -527,6 +561,8 @@
       const api = window.ApiClient ?? (window.parent !== window ? window.parent.ApiClient : null);
       const audioPlayers = [document.getElementById('audio'), document.getElementById('audio-next')];
       const startButton = document.getElementById('start-button');
+      const musicVolumeInput = document.getElementById('music-volume');
+      const musicVolumeValue = document.getElementById('music-volume-value');
       const answerForm = document.getElementById('answer-form');
       const answerInput = document.getElementById('answer-input');
       const submitButton = document.getElementById('submit-button');
@@ -553,6 +589,7 @@
       const settingsLink = document.getElementById('settings-link');
       const artworkContainer = document.getElementById('artwork-container');
       const albumArt = document.getElementById('album-art');
+      const matchBadges = document.getElementById('match-badges');
 
       if (settingsLink && window.parent !== window) {
         settingsLink.href = window.parent.location.pathname + '#/configurationpage?name=JellyBlindTestSettings';
@@ -573,6 +610,7 @@
       let countdownInterval = 0;
       let crossfadeInterval = 0;
       let activeAudio = audioPlayers[0];
+      let musicVolume = 1;
       let totalCount = null;
       let popularTracks = null;
       const usedIds = new Set();
@@ -584,18 +622,31 @@
       const resultsSummary = document.getElementById('results-summary');
       const resultsBody = document.getElementById('results-body');
 
-      function setResult(message, tone, matches) {
+      function setResult(message, tone) {
         result.replaceChildren(document.createTextNode(message));
         result.className = 'blind-result' + (tone ? ' ' + tone : '');
-        if (matches?.songMatched) appendMatchBadge('Song');
-        if (matches?.artistMatched) appendMatchBadge('Artist');
       }
 
-      function appendMatchBadge(label) {
-        const badge = document.createElement('span');
-        badge.className = 'blind-match-badge';
-        badge.textContent = label;
-        result.append(badge);
+      function renderMatchBadges(roundResult) {
+        matchBadges.replaceChildren();
+        if (!roundResult) {
+          matchBadges.hidden = true;
+          return;
+        }
+
+        if (roundResult.songMatched) {
+          const songBadge = document.createElement('span');
+          songBadge.className = 'blind-match-badge';
+          songBadge.textContent = 'Song matched';
+          matchBadges.append(songBadge);
+        }
+        if (roundResult.artistMatched) {
+          const artistBadge = document.createElement('span');
+          artistBadge.className = 'blind-match-badge';
+          artistBadge.textContent = 'Artist matched';
+          matchBadges.append(artistBadge);
+        }
+        matchBadges.hidden = matchBadges.childElementCount === 0;
       }
 
       function normalizeAnswer(value) {
@@ -936,7 +987,7 @@
         crossfadeInterval = 0;
         audioPlayers.forEach(player => {
           player.pause();
-          player.volume = 1;
+          player.volume = musicVolume;
           player.loop = false;
           if (reset) {
             try { player.currentTime = 0; } catch (_) { /* Metadata may not be ready. */ }
@@ -949,7 +1000,7 @@
         const outgoingAudio = activeAudio;
         if (outgoingAudio === incomingAudio || outgoingAudio.paused || outgoingAudio.ended) {
           outgoingAudio.pause();
-          incomingAudio.volume = 1;
+          incomingAudio.volume = musicVolume;
           activeAudio = incomingAudio;
           return;
         }
@@ -959,15 +1010,15 @@
         activeAudio = incomingAudio;
         crossfadeInterval = window.setInterval(() => {
           const progress = Math.min((performance.now() - startedAt) / CROSSFADE_MILLISECONDS, 1);
-          incomingAudio.volume = progress;
-          outgoingAudio.volume = 1 - progress;
+          incomingAudio.volume = progress * musicVolume;
+          outgoingAudio.volume = (1 - progress) * musicVolume;
           if (progress >= 1) {
             window.clearInterval(crossfadeInterval);
             crossfadeInterval = 0;
             outgoingAudio.pause();
             try { outgoingAudio.currentTime = 0; } catch (_) { /* Metadata may not be ready. */ }
-            outgoingAudio.volume = 1;
-            incomingAudio.volume = 1;
+            outgoingAudio.volume = musicVolume;
+            incomingAudio.volume = musicVolume;
           }
         }, 40);
       }
@@ -1222,6 +1273,7 @@
         submitButton.disabled = true;
         artworkContainer.hidden = true;
         albumArt.removeAttribute('src');
+        renderMatchBadges(null);
         setResult('Finding a random song…');
         stageTitle.textContent = 'Picking a song';
         stageCopy.textContent = 'One moment.';
@@ -1256,7 +1308,7 @@
           incomingAudio.load();
           incomingAudio.src = streamUrl;
           incomingAudio.loop = true;
-          incomingAudio.volume = activeAudio.paused || activeAudio.ended ? 1 : 0;
+          incomingAudio.volume = activeAudio.paused || activeAudio.ended ? musicVolume : 0;
           await incomingAudio.play();
           crossfadeTo(incomingAudio);
           answerInput.focus();
@@ -1286,6 +1338,7 @@
         answerInput.disabled = true;
         submitButton.disabled = true;
         answerInput.placeholder = 'Guessing time is over';
+        renderMatchBadges(roundResults[round - 1]);
 
         const artist = getArtistLabels(currentTrack).join(', ') || 'Unknown artist';
         if (timedOut) {
@@ -1339,6 +1392,7 @@
         const newArtistPoint = artistMatched && !roundResult.artistMatched;
         roundResult.songMatched ||= songMatched;
         roundResult.artistMatched ||= artistMatched;
+        renderMatchBadges(roundResult);
         const points = Number(newSongPoint) + Number(newArtistPoint);
         score += points;
         scoreLabel.textContent = String(score);
@@ -1349,10 +1403,10 @@
           ? 'Matched ' + [newSongPoint ? 'song' : '', newArtistPoint ? 'artist' : ''].filter(Boolean).join(' and ') + '. +' + points + (points === 1 ? ' point. Keep guessing.' : ' points. Keep guessing.')
           : matchedCategories.length
             ? 'Already earned the ' + matchedCategories.join(' and ') + ' point. Keep guessing for another match.'
-            : 'No match yet. Keep trying until the timer ends.', points ? 'correct' : '', roundResult);
+            : 'No match yet. Keep trying until the timer ends.', points ? 'correct' : '');
         answerInput.value = '';
         if (roundResult.songMatched && roundResult.artistMatched) {
-          setResult('Both matched. Revealing the answer.', 'correct', roundResult);
+          setResult('Both matched. Revealing the answer.', 'correct');
           beginRevealPhase(false);
           return;
         }
@@ -1375,6 +1429,16 @@
         scoreLabel.textContent = '0';
         updateRoundList();
         loadRound();
+      });
+
+      musicVolumeInput.addEventListener('input', () => {
+        musicVolume = Number(musicVolumeInput.value) / 100;
+        musicVolumeValue.value = Math.round(musicVolume * 100) + '%';
+        if (!crossfadeInterval) {
+          audioPlayers.forEach(player => {
+            if (!player.paused && !player.ended) player.volume = musicVolume;
+          });
+        }
       });
 
       sourceSelect.addEventListener('change', updateSourceWarning);
