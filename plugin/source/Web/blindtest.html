@@ -37,10 +37,19 @@
       border-bottom: 1px solid var(--blind-line);
     }
 
+    #JellyBlindTestPage .blind-title-group { min-width: 0; }
+
     #JellyBlindTestPage h1 {
       margin: 0;
       font-size: 32px;
       font-weight: 700;
+    }
+
+    #JellyBlindTestPage .blind-page-subtitle {
+      margin: 5px 0 0;
+      color: var(--blind-muted);
+      font-size: 14px;
+      line-height: 1.4;
     }
 
     #JellyBlindTestPage .blind-kicker {
@@ -91,7 +100,8 @@
     #JellyBlindTestPage .blind-stage {
       position: relative;
       display: grid;
-      min-height: 250px;
+      height: 300px;
+      min-height: 300px;
       place-items: center;
       overflow: hidden;
       padding: 32px;
@@ -134,6 +144,9 @@
       position: relative;
       z-index: 1;
       width: min(100%, 460px);
+      min-height: 0;
+      max-height: 100%;
+      overflow: hidden;
     }
 
     #JellyBlindTestPage .blind-stage-mark {
@@ -149,14 +162,21 @@
     }
 
     #JellyBlindTestPage .blind-stage h2 {
+      overflow: hidden;
       margin: 0 0 8px;
       font-size: 23px;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     #JellyBlindTestPage .blind-stage p {
+      display: -webkit-box;
+      overflow: hidden;
       margin: 0;
       color: var(--blind-muted);
       line-height: 1.5;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
     }
 
     #JellyBlindTestPage .blind-match-badges {
@@ -206,16 +226,57 @@
       margin-top: 18px;
     }
 
-    #JellyBlindTestPage .blind-volume-label {
-      display: inline-flex;
-      min-height: 44px;
+    #JellyBlindTestPage .blind-volume-control {
+      position: absolute;
+      z-index: 3;
+      top: 12px;
+      right: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    #JellyBlindTestPage .blind-volume-toggle {
+      display: grid;
+      width: 38px;
+      height: 38px;
+      padding: 0;
+      place-items: center;
+      border: 1px solid var(--blind-line);
+      border-radius: 50%;
+      color: var(--blind-text);
+      background: color-mix(in srgb, var(--blind-panel) 84%, transparent);
+      cursor: pointer;
+    }
+    #JellyBlindTestPage .blind-volume-toggle:hover,
+    #JellyBlindTestPage .blind-volume-toggle:focus-visible { color: var(--blind-accent); }
+    #JellyBlindTestPage .blind-volume-toggle svg { width: 20px; height: 20px; }
+    #JellyBlindTestPage .blind-volume-panel {
+      display: flex;
+      min-width: 52px;
+      flex-direction: column;
       align-items: center;
       gap: 8px;
-      color: var(--blind-muted);
-      font-size: 13px;
+      margin-top: 6px;
+      padding: 10px 8px;
+      border: 1px solid var(--blind-line);
+      border-radius: 6px;
+      background: color-mix(in srgb, var(--blind-panel) 94%, transparent);
     }
-    #JellyBlindTestPage .blind-volume-label input { width: 120px; accent-color: var(--blind-accent); }
-    #JellyBlindTestPage .blind-volume-label output { min-width: 3ch; color: var(--blind-text); font-variant-numeric: tabular-nums; }
+    #JellyBlindTestPage .blind-volume-panel[hidden] { display: none; }
+    #JellyBlindTestPage .blind-volume-panel input {
+      width: 24px;
+      height: 112px;
+      accent-color: var(--blind-accent);
+      direction: rtl;
+      writing-mode: vertical-lr;
+    }
+    #JellyBlindTestPage .blind-volume-panel output {
+      min-width: 3ch;
+      color: var(--blind-muted);
+      font-size: 12px;
+      font-variant-numeric: tabular-nums;
+      text-align: center;
+    }
 
     #JellyBlindTestPage .blind-session-settings { flex: 1 1 100%; }
     #JellyBlindTestPage .blind-session-settings summary {
@@ -357,37 +418,16 @@
     }
 
     #JellyBlindTestPage .blind-rail h2 {
-      margin: 0 0 16px;
+      margin: 0;
       color: var(--blind-warm);
       font-size: 15px;
       text-transform: uppercase;
     }
 
-    #JellyBlindTestPage .blind-rounds {
-      display: grid;
-      gap: 8px;
-      margin: 0;
-      padding: 0;
-      list-style: none;
-    }
-
-    #JellyBlindTestPage .blind-rounds li {
-      display: flex;
-      justify-content: space-between;
-      padding: 8px 0;
-      border-bottom: 1px solid var(--blind-line);
+    #JellyBlindTestPage .blind-round-status {
+      margin: 5px 0 0;
       color: var(--blind-muted);
       font-size: 13px;
-    }
-
-    #JellyBlindTestPage .blind-rounds li.current { color: var(--blind-text); }
-    #JellyBlindTestPage .blind-rounds li.done { color: var(--blind-accent); }
-
-    #JellyBlindTestPage .blind-footnote {
-      margin: 14px 0 0;
-      color: var(--blind-muted);
-      font-size: 12px;
-      line-height: 1.5;
     }
 
     #JellyBlindTestPage .blind-results { margin-top: 34px; }
@@ -414,9 +454,6 @@
       #JellyBlindTestPage .blind-heading { align-items: start; }
       #JellyBlindTestPage .blind-board { grid-template-columns: 1fr; }
       #JellyBlindTestPage .blind-rail { order: -1; }
-      #JellyBlindTestPage .blind-rounds { grid-template-columns: repeat(5, minmax(0, 1fr)); }
-      #JellyBlindTestPage .blind-rounds li { display: block; border-bottom: 0; text-align: center; }
-      #JellyBlindTestPage .blind-rounds li span { display: block; }
       #JellyBlindTestPage .blind-stage { min-height: 220px; padding: 24px 16px; }
       #JellyBlindTestPage .blind-answer-row { flex-direction: column; }
       #JellyBlindTestPage .blind-source-select { flex: 1 1 100%; }
@@ -426,9 +463,10 @@
   <div data-role="content">
   <main class="blind-shell">
     <header class="blind-heading">
-      <div>
+      <div class="blind-title-group">
         <p class="blind-kicker">Jellyfin music game</p>
         <h1>Blind Test</h1>
+        <p class="blind-page-subtitle">The song is playing. Enter the title and/or artist before the timer ends.</p>
       </div>
       <div class="blind-heading-actions">
         <a class="blind-settings-link" id="settings-link" href="#/configurationpage?name=JellyBlindTestSettings" hidden>Settings</a>
@@ -439,6 +477,19 @@
     <div class="blind-board">
       <section class="blind-main" aria-label="Blind test game">
         <div class="blind-stage" aria-live="polite">
+          <div class="blind-volume-control" id="volume-control">
+            <button class="blind-volume-toggle" id="volume-toggle" type="button" aria-label="Show volume slider" aria-controls="volume-panel" aria-expanded="false" title="Show volume slider">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M4 10v4h4l5 4V6l-5 4H4Z"></path>
+                <path d="M17 9a5 5 0 0 1 0 6"></path>
+                <path d="M19 6a9 9 0 0 1 0 12"></path>
+              </svg>
+            </button>
+            <div class="blind-volume-panel" id="volume-panel" hidden>
+              <input id="music-volume" type="range" min="0" max="100" step="1" value="100" aria-label="Music volume" aria-orientation="vertical">
+              <output id="music-volume-value" for="music-volume">100%</output>
+            </div>
+          </div>
           <div class="blind-stage-artwork" id="artwork-container" hidden>
             <img id="album-art" alt="Album artwork">
           </div>
@@ -463,10 +514,6 @@
             <option value="top-ranked" hidden>Highest-ranked songs (top 500)</option>
           </select>
           <button class="blind-button primary" id="start-button" type="button">Start test</button>
-          <label class="blind-volume-label" for="music-volume">Music volume
-            <input id="music-volume" type="range" min="0" max="100" step="1" value="100" aria-label="Music volume">
-            <output id="music-volume-value" for="music-volume">100%</output>
-          </label>
           <p class="blind-source-warning" id="source-warning" role="status" hidden></p>
           <details class="blind-session-settings">
             <summary>Session settings (not saved)</summary>
@@ -501,10 +548,8 @@
       </section>
 
       <aside class="blind-rail" aria-label="Game progress">
-        <h2 id="round-heading">Your set</h2>
-        <ol class="blind-rounds" id="round-list">
-        </ol>
-        <p class="blind-footnote">Only songs available to your Jellyfin user are included.</p>
+        <h2 id="round-heading">Round 1 of 5</h2>
+        <p class="blind-round-status" id="round-status">Ready to start</p>
       </aside>
     </div>
 
@@ -563,6 +608,9 @@
       const startButton = document.getElementById('start-button');
       const musicVolumeInput = document.getElementById('music-volume');
       const musicVolumeValue = document.getElementById('music-volume-value');
+      const volumeControl = document.getElementById('volume-control');
+      const volumeToggle = document.getElementById('volume-toggle');
+      const volumePanel = document.getElementById('volume-panel');
       const answerForm = document.getElementById('answer-form');
       const answerInput = document.getElementById('answer-input');
       const submitButton = document.getElementById('submit-button');
@@ -571,7 +619,6 @@
       const result = document.getElementById('result');
       const scoreLabel = document.getElementById('score');
       const roundHeading = document.getElementById('round-heading');
-      const roundList = document.getElementById('round-list');
       const scoreTotalLabel = document.getElementById('score-total');
       const sourceSelect = document.getElementById('source-select');
       const popularSourceOption = sourceSelect.querySelector('option[value="popular"]');
@@ -590,6 +637,7 @@
       const artworkContainer = document.getElementById('artwork-container');
       const albumArt = document.getElementById('album-art');
       const matchBadges = document.getElementById('match-badges');
+      const roundStatus = document.getElementById('round-status');
 
       if (settingsLink && window.parent !== window) {
         settingsLink.href = window.parent.location.pathname + '#/configurationpage?name=JellyBlindTestSettings';
@@ -649,7 +697,7 @@
         resultsBody.replaceChildren();
         resultsSummary.hidden = true;
         scoreLabel.textContent = '0';
-        updateRoundList();
+        updateRoundCounter();
         renderMatchBadges(null);
         artworkContainer.hidden = true;
         albumArt.removeAttribute('src');
@@ -657,7 +705,6 @@
         startButton.textContent = 'Start test';
         sourceSelect.disabled = false;
         sessionSettingsFields.disabled = false;
-        roundHeading.textContent = 'Your set';
         stageTitle.textContent = 'Session aborted';
         stageCopy.textContent = 'The session stopped when you left Blind Test.';
         answerInput.value = '';
@@ -672,6 +719,8 @@
         window.clearInterval(pageActivityInterval);
         pageActivityObserver?.disconnect();
         document.removeEventListener('visibilitychange', checkGamePageVisibility);
+        document.removeEventListener('click', closeVolumeControlOnOutside);
+        document.removeEventListener('keydown', closeVolumeControlOnEscape);
         window.removeEventListener('hashchange', abortOnNavigation);
         window.removeEventListener('popstate', abortOnNavigation);
         window.removeEventListener('pagehide', abortOnNavigation);
@@ -866,35 +915,14 @@
         }
       }
 
-      function updateRoundList() {
-        [...roundList.children].forEach((item, index) => {
-          item.classList.toggle('current', index === round - 1 && !roundRevealed);
-          item.classList.toggle('done', index < round - 1 || (index === round - 1 && roundRevealed));
-          const state = item.children[1];
-          if (index < round - 1 || (index === round - 1 && roundRevealed)) {
-            state.textContent = 'Done';
-          } else if (index === round - 1) {
-            state.textContent = 'Playing';
-          } else {
-            state.textContent = 'Waiting';
-          }
-        });
-        roundHeading.textContent = round > 0 && round <= totalRounds
-          ? 'Round ' + round + ' of ' + totalRounds
-          : 'Your set';
-      }
-
-      function renderRoundSlots() {
-        roundList.replaceChildren();
-        for (let index = 0; index < totalRounds; index++) {
-          const item = document.createElement('li');
-          const number = document.createElement('span');
-          const state = document.createElement('span');
-          number.textContent = String(index + 1).padStart(2, '0');
-          state.textContent = 'Waiting';
-          item.append(number, state);
-          roundList.append(item);
-        }
+      function updateRoundCounter(isLoadingNextRound = false) {
+        const displayedRound = Math.max(1, Math.min(totalRounds, round + Number(isLoadingNextRound)));
+        roundHeading.textContent = 'Round ' + displayedRound + ' of ' + totalRounds;
+        roundStatus.textContent = sessionActive
+          ? 'Playing round ' + displayedRound
+          : round >= totalRounds && !resultsSummary.hidden
+            ? 'Set complete'
+            : 'Ready to start';
         scoreTotalLabel.textContent = String(totalRounds * 2);
       }
 
@@ -944,8 +972,7 @@
         topRankedSourceOption.textContent = 'Highest-ranked songs (top ' + popularTrackPoolSize + ')';
         if (popularSourceOption.hidden && ['popular', 'top-ranked'].includes(sourceSelect.value)) sourceSelect.value = 'library';
 
-        renderRoundSlots();
-        stageCopy.textContent = totalRounds + ' random songs. ' + guessingSeconds + ' seconds to guess while each song plays.';
+        updateRoundCounter();
         populateSessionSettings();
         updateSourceWarning();
       }
@@ -995,8 +1022,7 @@
         revealSeconds = readBoundedValue(sessionRevealInput, 1, 30, revealSeconds);
         popularTrackPoolSize = readBoundedValue(sessionRankPoolInput, 1, 5000, popularTrackPoolSize);
         populateSessionSettings();
-        renderRoundSlots();
-        stageCopy.textContent = totalRounds + ' random songs. ' + guessingSeconds + ' seconds to guess while each song plays.';
+        updateRoundCounter();
         updateSourceWarning();
       }
 
@@ -1152,7 +1178,7 @@
         countdown.hidden = true;
         startButton.hidden = false;
         startButton.textContent = 'Play again';
-        roundHeading.textContent = 'Final score';
+        updateRoundCounter();
         setResult('');
         sourceSelect.disabled = false;
         sessionSettingsFields.disabled = false;
@@ -1392,6 +1418,7 @@
         setResult('Finding a random song…');
         stageTitle.textContent = 'Picking a song';
         stageCopy.textContent = 'One moment.';
+        updateRoundCounter(true);
 
         try {
           const selectedTrack = await chooseRandomTrack();
@@ -1410,9 +1437,9 @@
           };
           answerInput.value = '';
           stageTitle.textContent = 'Guess the song or artist';
-          stageCopy.textContent = 'The song is playing. Enter the title and/or artist before the timer ends.';
+          stageCopy.textContent = '';
           setResult('');
-          updateRoundList();
+          updateRoundCounter();
 
           const streamUrl = api.getUrl('Audio/' + encodeURIComponent(currentTrack.Id) + '/stream', {
             api_key: api.accessToken(),
@@ -1443,6 +1470,7 @@
           currentTrack = null;
           sourceSelect.disabled = false;
           sessionSettingsFields.disabled = false;
+          updateRoundCounter();
           stageTitle.textContent = 'Could not start this round';
           stageCopy.textContent = error?.message ?? 'The song library could not be read.';
           startButton.hidden = false;
@@ -1468,7 +1496,7 @@
         stageTitle.textContent = currentTrack.Name || 'Unknown song';
         stageCopy.textContent = artist;
         showAlbumArtwork(currentTrack);
-        updateRoundList();
+        updateRoundCounter();
       }
 
       async function beginRevealPhase(timedOut, roundSessionId = sessionId) {
@@ -1566,10 +1594,31 @@
         usedPopularArtists.clear();
         usedIds.clear();
         scoreLabel.textContent = '0';
-        updateRoundList();
         answerInput.focus();
         loadRound(sessionId);
       });
+
+      function setVolumeControlOpen(isOpen) {
+        volumePanel.hidden = !isOpen;
+        volumeToggle.setAttribute('aria-expanded', String(isOpen));
+        const label = isOpen ? 'Hide volume slider' : 'Show volume slider';
+        volumeToggle.setAttribute('aria-label', label);
+        volumeToggle.title = label;
+      }
+
+      function closeVolumeControlOnOutside(event) {
+        if (!volumeControl.contains(event.target)) setVolumeControlOpen(false);
+      }
+
+      function closeVolumeControlOnEscape(event) {
+        if (event.key !== 'Escape' || volumePanel.hidden) return;
+        setVolumeControlOpen(false);
+        volumeToggle.focus();
+      }
+
+      volumeToggle.addEventListener('click', () => setVolumeControlOpen(volumePanel.hidden));
+      document.addEventListener('click', closeVolumeControlOnOutside);
+      document.addEventListener('keydown', closeVolumeControlOnEscape);
 
       musicVolumeInput.addEventListener('input', () => {
         musicVolume = Number(musicVolumeInput.value) / 100;
