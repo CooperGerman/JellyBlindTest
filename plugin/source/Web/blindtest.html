@@ -487,11 +487,11 @@
           </details>
         </div>
 
-        <form class="blind-answer" id="answer-form" hidden>
+        <form class="blind-answer" id="answer-form">
           <label for="answer-input">Song title and/or artist</label>
           <div class="blind-answer-row">
-            <input id="answer-input" name="answer" type="text" autocomplete="off" placeholder="Type the song title or artist" disabled>
-            <button class="blind-button" id="submit-button" type="submit" disabled>Check answer</button>
+            <input id="answer-input" name="answer" type="text" autocomplete="off" placeholder="Type the song title or artist">
+            <button class="blind-button" id="submit-button" type="submit">Check answer</button>
           </div>
           <p class="blind-answer-hint">Guesses accumulate during the round; separate entries can combine to make a match.</p>
         </form>
@@ -607,6 +607,8 @@
       let submitted = false;
       let roundRevealed = false;
       let requestInProgress = false;
+      let sessionActive = false;
+      let sessionId = 0;
       let countdownInterval = 0;
       let crossfadeInterval = 0;
       let activeAudio = audioPlayers[0];
@@ -621,6 +623,75 @@
       const roundResults = [];
       const resultsSummary = document.getElementById('results-summary');
       const resultsBody = document.getElementById('results-body');
+
+      function isGamePageVisible() {
+        const gamePage = document.getElementById('JellyBlindTestPage');
+        if (!gamePage?.isConnected || document.visibilityState === 'hidden') return false;
+        for (let element = gamePage; element; element = element.parentElement) {
+          const style = window.getComputedStyle(element);
+          if (element.hidden || element.getAttribute('aria-hidden') === 'true'
+            || style.display === 'none' || style.visibility === 'hidden') return false;
+        }
+        return true;
+      }
+
+      function abortSession() {
+        if (!sessionActive) return;
+        sessionActive = false;
+        sessionId++;
+        requestInProgress = false;
+        stopAudio();
+        currentTrack = null;
+        round = 0;
+        score = 0;
+        roundResults.length = 0;
+        resultsBody.replaceChildren();
+        resultsSummary.hidden = true;
+        scoreLabel.textContent = '0';
+        updateRoundList();
+        renderMatchBadges(null);
+        artworkContainer.hidden = true;
+        albumArt.removeAttribute('src');
+        startButton.hidden = false;
+        startButton.textContent = 'Start test';
+        sourceSelect.disabled = false;
+        sessionSettingsFields.disabled = false;
+        roundHeading.textContent = 'Your set';
+        stageTitle.textContent = 'Session aborted';
+        stageCopy.textContent = 'The session stopped when you left Blind Test.';
+        answerInput.value = '';
+        answerInput.placeholder = 'Type a guess or start a test';
+        setResult('');
+      }
+
+      let gamePageWasVisible = false;
+      let pageActivityInterval = 0;
+      let pageActivityObserver = null;
+      function stopPageActivityMonitoring() {
+        window.clearInterval(pageActivityInterval);
+        pageActivityObserver?.disconnect();
+        document.removeEventListener('visibilitychange', checkGamePageVisibility);
+        window.removeEventListener('hashchange', abortOnNavigation);
+        window.removeEventListener('popstate', abortOnNavigation);
+        window.removeEventListener('pagehide', abortOnNavigation);
+        window.removeEventListener('beforeunload', abortOnNavigation);
+      }
+
+      function checkGamePageVisibility() {
+        const visible = isGamePageVisible();
+        if (!visible) {
+          gamePageWasVisible = false;
+          abortSession();
+          if (!document.getElementById('JellyBlindTestPage')?.isConnected) stopPageActivityMonitoring();
+          return;
+        }
+        if (!gamePageWasVisible) answerInput.focus();
+        gamePageWasVisible = true;
+      }
+
+      function abortOnNavigation() {
+        abortSession();
+      }
 
       function setResult(message, tone) {
         result.replaceChildren(document.createTextNode(message));
@@ -1023,13 +1094,16 @@
         }, 40);
       }
 
-      function finishGame() {
+      function finishGame(roundSessionId) {
+        if (!sessionActive || roundSessionId !== sessionId) return;
+        sessionActive = false;
+        sessionId++;
+        requestInProgress = false;
         renderResults();
         stopAudio();
         currentTrack = null;
         stageTitle.textContent = 'Set complete';
         stageCopy.textContent = 'You scored ' + score + ' out of ' + totalRounds * 2 + ' points. Ready for another set?';
-        answerForm.hidden = true;
         artworkContainer.hidden = true;
         albumArt.removeAttribute('src');
         countdown.hidden = true;
@@ -1039,6 +1113,7 @@
         setResult('');
         sourceSelect.disabled = false;
         sessionSettingsFields.disabled = false;
+        answerInput.focus();
       }
 
       function renderResults() {
@@ -1259,8 +1334,8 @@
         throw new Error('Could not find another unused song. Try starting a new set.');
       }
 
-      async function loadRound() {
-        if (requestInProgress) return;
+      async function loadRound(roundSessionId = sessionId) {
+        if (!sessionActive || roundSessionId !== sessionId || requestInProgress) return;
         requestInProgress = true;
         clearCountdown();
         submitted = false;
@@ -1268,9 +1343,6 @@
         sourceSelect.disabled = true;
         currentTrack = null;
         startButton.hidden = true;
-        answerForm.hidden = round === 0;
-        answerInput.disabled = true;
-        submitButton.disabled = true;
         artworkContainer.hidden = true;
         albumArt.removeAttribute('src');
         renderMatchBadges(null);
@@ -1279,7 +1351,11 @@
         stageCopy.textContent = 'One moment.';
 
         try {
-          currentTrack = await loadTrackDetails(await chooseRandomTrack());
+          const selectedTrack = await chooseRandomTrack();
+          if (!sessionActive || roundSessionId !== sessionId) return;
+          const track = await loadTrackDetails(selectedTrack);
+          if (!sessionActive || roundSessionId !== sessionId) return;
+          currentTrack = track;
           round++;
           roundResults[round - 1] = {
             title: currentTrack.Name,
@@ -1289,9 +1365,6 @@
             songMatched: false,
             artistMatched: false,
           };
-          answerForm.hidden = false;
-          answerInput.disabled = false;
-          submitButton.disabled = false;
           answerInput.value = '';
           stageTitle.textContent = 'Guess the song or artist';
           stageCopy.textContent = 'The song is playing. Enter the title and/or artist before the timer ends.';
@@ -1309,15 +1382,22 @@
           incomingAudio.src = streamUrl;
           incomingAudio.loop = true;
           incomingAudio.volume = activeAudio.paused || activeAudio.ended ? musicVolume : 0;
+          incomingAudio.dataset.jellyBlindTestSession = String(roundSessionId);
           await incomingAudio.play();
+          if (!sessionActive || roundSessionId !== sessionId) {
+            if (incomingAudio.dataset.jellyBlindTestSession === String(roundSessionId)) incomingAudio.pause();
+            return;
+          }
           crossfadeTo(incomingAudio);
           answerInput.focus();
-          startCountdown('Guessing', guessingSeconds, () => beginRevealPhase(!submitted));
+          startCountdown('Guessing', guessingSeconds, () => beginRevealPhase(!submitted, roundSessionId));
         } catch (error) {
+          if (!sessionActive || roundSessionId !== sessionId) return;
+          sessionActive = false;
+          sessionId++;
+          requestInProgress = false;
           stopAudio();
-          answerForm.hidden = true;
-          answerInput.disabled = true;
-          submitButton.disabled = true;
+          currentTrack = null;
           sourceSelect.disabled = false;
           sessionSettingsFields.disabled = false;
           stageTitle.textContent = 'Could not start this round';
@@ -1326,7 +1406,7 @@
           startButton.textContent = round === 0 ? 'Try again' : 'Start a new set';
           setResult('Check that this user has access to music in Jellyfin.', 'error');
         } finally {
-          requestInProgress = false;
+          if (roundSessionId === sessionId) requestInProgress = false;
         }
       }
 
@@ -1334,10 +1414,8 @@
         if (!currentTrack) return;
         submitted = true;
         roundRevealed = true;
-        answerForm.hidden = false;
-        answerInput.disabled = true;
-        submitButton.disabled = true;
         answerInput.placeholder = 'Guessing time is over';
+        answerInput.focus();
         renderMatchBadges(roundResults[round - 1]);
 
         const artist = getArtistLabels(currentTrack).join(', ') || 'Unknown artist';
@@ -1350,25 +1428,32 @@
         updateRoundList();
       }
 
-      async function beginRevealPhase(timedOut) {
+      async function beginRevealPhase(timedOut, roundSessionId = sessionId) {
+        if (!sessionActive || roundSessionId !== sessionId) return;
         clearCountdown();
         revealAnswer(timedOut);
 
         countdownLabel.textContent = 'Next song in';
+        const revealAudio = activeAudio;
         try {
-          if (activeAudio.paused) await activeAudio.play();
+          if (revealAudio.paused) await revealAudio.play();
         } catch (_) {
           setResult('The reveal will continue without audio.', 'error');
         }
+        if (!sessionActive || roundSessionId !== sessionId) {
+          if (revealAudio.dataset.jellyBlindTestSession === String(roundSessionId)) revealAudio.pause();
+          return;
+        }
         startCountdown('Next song in', revealSeconds, () => {
-          if (round >= totalRounds) finishGame();
-          else loadRound();
+          if (!sessionActive || roundSessionId !== sessionId) return;
+          if (round >= totalRounds) finishGame(roundSessionId);
+          else loadRound(roundSessionId);
         });
       }
 
       function submitAnswer(event) {
         event.preventDefault();
-        if (!currentTrack || roundRevealed) return;
+        if (!sessionActive || !currentTrack || roundRevealed) return;
         const submittedAnswer = answerInput.value.trim();
         if (!normalizeAnswer(submittedAnswer)) {
           setResult('Enter a song title and/or artist.', 'error');
@@ -1407,13 +1492,16 @@
         answerInput.value = '';
         if (roundResult.songMatched && roundResult.artistMatched) {
           setResult('Both matched. Revealing the answer.', 'correct');
-          beginRevealPhase(false);
+          beginRevealPhase(false, sessionId);
           return;
         }
         answerInput.focus();
       }
 
       startButton.addEventListener('click', () => {
+        sessionId++;
+        sessionActive = true;
+        requestInProgress = false;
         applySessionSettings();
         sessionSettingsFields.disabled = true;
         answerInput.placeholder = 'Type the song title or artist';
@@ -1428,7 +1516,8 @@
         usedIds.clear();
         scoreLabel.textContent = '0';
         updateRoundList();
-        loadRound();
+        answerInput.focus();
+        loadRound(sessionId);
       });
 
       musicVolumeInput.addEventListener('input', () => {
@@ -1445,6 +1534,22 @@
       answerForm.addEventListener('keydown', navigateAnswerHistory);
       answerForm.addEventListener('submit', submitAnswer);
       audioPlayers.forEach(player => player.addEventListener('ended', () => player.pause()));
+
+      const observedGamePage = document.getElementById('JellyBlindTestPage');
+      pageActivityObserver = new MutationObserver(checkGamePageVisibility);
+      for (let element = observedGamePage; element; element = element.parentElement) {
+        pageActivityObserver.observe(element, {
+          attributes: true,
+          attributeFilter: ['aria-hidden', 'class', 'hidden', 'style'],
+        });
+      }
+      pageActivityInterval = window.setInterval(checkGamePageVisibility, 250);
+      document.addEventListener('visibilitychange', checkGamePageVisibility);
+      window.addEventListener('hashchange', abortOnNavigation);
+      window.addEventListener('popstate', abortOnNavigation);
+      window.addEventListener('pagehide', abortOnNavigation);
+      window.addEventListener('beforeunload', abortOnNavigation);
+      checkGamePageVisibility();
 
       if (!api) {
         startButton.disabled = true;
