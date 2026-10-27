@@ -331,6 +331,7 @@
       color: var(--blind-muted);
       font-size: 12px;
     }
+    #JellyBlindTestPage .blind-source-field[hidden] { display: none; }
     #JellyBlindTestPage .blind-source-select {
       min-width: min(280px, 100%);
       min-height: 44px;
@@ -763,6 +764,7 @@
       let submitted = false;
       let roundRevealed = false;
       let requestInProgress = false;
+      let pendingPlayback = null;
       let sessionActive = false;
       let sessionId = 0;
       let countdownInterval = 0;
@@ -797,6 +799,7 @@
         if (!sessionActive) return;
         sessionActive = false;
         sessionId++;
+        pendingPlayback = null;
         requestInProgress = false;
         stopAudio();
         currentTrack = null;
@@ -1383,6 +1386,7 @@
         if (!sessionActive || roundSessionId !== sessionId) return;
         sessionActive = false;
         sessionId++;
+        pendingPlayback = null;
         requestInProgress = false;
         renderResults();
         stopAudio();
@@ -1736,6 +1740,33 @@
         throw new Error('Could not find another unused song. Try starting a new set.');
       }
 
+      function startRoundPlayback(track, incomingAudio, roundSessionId) {
+        if (!sessionActive || roundSessionId !== sessionId) {
+          incomingAudio.pause();
+          return;
+        }
+        pendingPlayback = null;
+        currentTrack = track;
+        round++;
+        roundResults[round - 1] = {
+          title: currentTrack.Name,
+          artist: getArtistLabels(currentTrack).join(', '),
+          artworkCandidates: getArtworkCandidates(currentTrack),
+          submittedAnswers: [],
+          songMatched: false,
+          artistMatched: false,
+        };
+        answerInput.value = '';
+        stageTitle.textContent = 'Guess the song or artist';
+        stageCopy.textContent = '';
+        setResult('');
+        updateRoundCounter();
+        startButton.hidden = true;
+        crossfadeTo(incomingAudio);
+        answerInput.focus();
+        startCountdown('Guessing', guessingSeconds, () => beginRevealPhase(!submitted, roundSessionId));
+      }
+
       async function loadRound(roundSessionId = sessionId) {
         if (!sessionActive || roundSessionId !== sessionId || requestInProgress) return;
         requestInProgress = true;
@@ -1781,28 +1812,20 @@
                 if (incomingAudio.dataset.jellyBlindTestSession === String(roundSessionId)) incomingAudio.pause();
                 return;
               }
-
-              currentTrack = track;
-              round++;
-              roundResults[round - 1] = {
-                title: currentTrack.Name,
-                artist: getArtistLabels(currentTrack).join(', '),
-                artworkCandidates: getArtworkCandidates(currentTrack),
-                submittedAnswers: [],
-                songMatched: false,
-                artistMatched: false,
-              };
-              answerInput.value = '';
-              stageTitle.textContent = 'Guess the song or artist';
-              stageCopy.textContent = '';
-              setResult('');
-              updateRoundCounter();
-              crossfadeTo(incomingAudio);
-              answerInput.focus();
-              startCountdown('Guessing', guessingSeconds, () => beginRevealPhase(!submitted, roundSessionId));
+              startRoundPlayback(track, incomingAudio, roundSessionId);
               return;
             } catch (error) {
               if (!sessionActive || roundSessionId !== sessionId) return;
+              if (error?.name === 'NotAllowedError' && incomingAudio) {
+                pendingPlayback = { track, audio: incomingAudio, roundSessionId };
+                stageTitle.textContent = 'Tap to start playback';
+                stageCopy.textContent = 'Tap below to allow audio on this device.';
+                startButton.hidden = false;
+                startButton.disabled = false;
+                startButton.textContent = 'Tap to play';
+                setResult('');
+                return;
+              }
               lastPlaybackError = error;
               if (incomingAudio) {
                 incomingAudio.pause();
@@ -1936,12 +1959,32 @@
       }
 
       startButton.addEventListener('click', () => {
+        if (pendingPlayback) {
+          const pending = pendingPlayback;
+          let playbackPromise;
+          try {
+            playbackPromise = pending.audio.play();
+          } catch (error) {
+            playbackPromise = Promise.reject(error);
+          }
+          startButton.disabled = true;
+          Promise.resolve(playbackPromise)
+            .then(() => startRoundPlayback(pending.track, pending.audio, pending.roundSessionId))
+            .catch(error => {
+              startButton.disabled = false;
+              stageTitle.textContent = 'Tap to start playback';
+              stageCopy.textContent = 'Tap below to allow audio on this device.';
+              setResult(error?.message ?? 'Playback was blocked. Tap to try again.', 'error');
+            });
+          return;
+        }
         if (!updateSourceWarning()) {
           setResult(sourceWarning.textContent, 'error');
           return;
         }
         sessionId++;
         sessionActive = true;
+        pendingPlayback = null;
         requestInProgress = false;
         applySessionSettings();
         sessionSettingsFields.disabled = true;
@@ -2057,7 +2100,8 @@
         api.getCurrentUser().then(user => {
           settingsLink.hidden = user?.Policy?.IsAdministrator !== true;
         }).catch(() => {});
-        Promise.all([loadSettings(), loadPlaylists()]).finally(() => { startButton.disabled = false; });
+        loadSettings().finally(() => { startButton.disabled = false; });
+        loadPlaylists();
       }
     })();
   </script>

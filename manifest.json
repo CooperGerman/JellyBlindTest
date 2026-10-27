@@ -8,6 +8,14 @@
     "overview": "Adds a five-round blind test game using songs from the signed-in user's Jellyfin library.",
     "versions": [
       {
+        "version": "0.1.42.0",
+        "changelog": "- Keep Start available while playlists load and support mobile tap-to-play restrictions.\n- Hide Playlist, Artist, and Genre filters when their strategy is inactive.",
+        "targetAbi": "12.1.0.0",
+        "sourceUrl": "https://raw.githubusercontent.com/CooperGerman/JellyBlindTest/main/plugin/JellyBlindTest.zip",
+        "checksum": "1f82f70df1a7988c168d166f6d012758",
+        "timestamp": "2026-10-27T22:23:55Z"
+      },
+      {
         "version": "0.1.41.0",
         "changelog": "- Add hierarchical Popular, Playlist, and Expert source configuration with artist and genre filters.\n- Stack match badges in the song card's upper-left corner.",
         "targetAbi": "12.1.0.0",
