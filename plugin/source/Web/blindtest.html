@@ -610,6 +610,7 @@
       let sessionActive = false;
       let sessionId = 0;
       let countdownInterval = 0;
+      let revealFadeTimeout = 0;
       let crossfadeInterval = 0;
       let activeAudio = audioPlayers[0];
       let musicVolume = 1;
@@ -764,19 +765,26 @@
 
       function phraseSimilarity(answer, target) {
         const answerWords = normalizeAnswer(answer).split(' ').filter(Boolean);
-        const targetPhrase = normalizeAnswer(target);
-        const targetWordCount = targetPhrase.split(' ').filter(Boolean).length;
-        if (!answerWords.length || !targetWordCount) return 0;
+        if (!answerWords.length) return 0;
+
+        const rawTarget = String(target ?? '');
+        const targetVariants = [...new Set([
+          rawTarget,
+          rawTarget.replace(/\s*\([^)]*\)/g, ' '),
+        ].map(normalizeAnswer).filter(Boolean))];
 
         let bestMatch = 0;
-        const shortestWindow = Math.max(1, targetWordCount - 1);
-        const longestWindow = targetWordCount + 1;
-        for (let start = 0; start < answerWords.length; start++) {
-          for (let length = shortestWindow; length <= longestWindow && start + length <= answerWords.length; length++) {
-            bestMatch = Math.max(
-              bestMatch,
-              similarity(answerWords.slice(start, start + length).join(' '), targetPhrase),
-            );
+        for (const targetPhrase of targetVariants) {
+          const targetWordCount = targetPhrase.split(' ').length;
+          const shortestWindow = Math.max(1, targetWordCount - 1);
+          const longestWindow = targetWordCount + 1;
+          for (let start = 0; start < answerWords.length; start++) {
+            for (let length = shortestWindow; length <= longestWindow && start + length <= answerWords.length; length++) {
+              bestMatch = Math.max(
+                bestMatch,
+                similarity(answerWords.slice(start, start + length).join(' '), targetPhrase),
+              );
+            }
           }
         }
         return bestMatch;
@@ -1029,6 +1037,8 @@
       function clearCountdown() {
         window.clearInterval(countdownInterval);
         countdownInterval = 0;
+        window.clearTimeout(revealFadeTimeout);
+        revealFadeTimeout = 0;
         countdown.hidden = true;
       }
 
@@ -1065,6 +1075,39 @@
           }
         });
         activeAudio = audioPlayers[0];
+      }
+
+      function fadeOutRevealAudio(roundSessionId, duration) {
+        revealFadeTimeout = 0;
+        if (!sessionActive || roundSessionId !== sessionId) return;
+
+        window.clearInterval(crossfadeInterval);
+        crossfadeInterval = 0;
+        const fadingAudio = activeAudio;
+        audioPlayers.forEach(player => {
+          if (player === fadingAudio) return;
+          player.pause();
+          player.volume = musicVolume;
+        });
+        fadingAudio.volume = musicVolume;
+
+        const startedAt = performance.now();
+        crossfadeInterval = window.setInterval(() => {
+          if (!sessionActive || roundSessionId !== sessionId || activeAudio !== fadingAudio) {
+            window.clearInterval(crossfadeInterval);
+            crossfadeInterval = 0;
+            return;
+          }
+
+          const progress = Math.min((performance.now() - startedAt) / duration, 1);
+          fadingAudio.volume = musicVolume * (1 - progress);
+          if (progress >= 1) {
+            window.clearInterval(crossfadeInterval);
+            crossfadeInterval = 0;
+            fadingAudio.pause();
+            fadingAudio.volume = musicVolume;
+          }
+        }, 40);
       }
 
       function crossfadeTo(incomingAudio) {
@@ -1446,9 +1489,17 @@
         }
         startCountdown('Next song in', revealSeconds, () => {
           if (!sessionActive || roundSessionId !== sessionId) return;
+          stopAudio();
           if (round >= totalRounds) finishGame(roundSessionId);
           else loadRound(roundSessionId);
         });
+        if (revealSeconds > 0) {
+          const fadeDuration = Math.min(CROSSFADE_MILLISECONDS, revealSeconds * 1000);
+          revealFadeTimeout = window.setTimeout(
+            () => fadeOutRevealAudio(roundSessionId, fadeDuration),
+            revealSeconds * 1000 - fadeDuration,
+          );
+        }
       }
 
       function submitAnswer(event) {

@@ -8,6 +8,14 @@
     "overview": "Adds a five-round blind test game using songs from the signed-in user's Jellyfin library.",
     "versions": [
       {
+        "version": "0.1.38.0",
+        "changelog": "- Fade reveal audio out before the next round starts.\n- Match song titles when parenthetical version text is omitted.",
+        "targetAbi": "12.1.0.0",
+        "sourceUrl": "https://raw.githubusercontent.com/CooperGerman/JellyBlindTest/main/plugin/JellyBlindTest.zip",
+        "checksum": "644eceff10229b08292ba1af1d8be317",
+        "timestamp": "2026-10-27T20:54:21Z"
+      },
+      {
         "version": "0.1.37.0",
         "changelog": "- Abort active sessions when navigating away from Blind Test.\n- Keep the answer field writable throughout the session.",
         "targetAbi": "12.1.0.0",
