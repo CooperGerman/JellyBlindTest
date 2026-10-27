@@ -8,6 +8,14 @@
     "overview": "Adds a five-round blind test game using songs from the signed-in user's Jellyfin library.",
     "versions": [
       {
+        "version": "0.1.40.0",
+        "changelog": "- Skip unplayable tracks and try another song.\n- Clarify the guessing subtitle.\n- Fix dependency plugin status detection.",
+        "targetAbi": "12.1.0.0",
+        "sourceUrl": "https://raw.githubusercontent.com/CooperGerman/JellyBlindTest/main/plugin/JellyBlindTest.zip",
+        "checksum": "93c09ad46e862d04ba79dc368fefde80",
+        "timestamp": "2026-10-27T21:39:57Z"
+      },
+      {
         "version": "0.1.39.0",
         "changelog": "- Add a compact vertical volume slider inside the song card.\n- Show a compact round counter and truncate long stage text without resizing the card.",
         "targetAbi": "12.1.0.0",

@@ -466,7 +466,7 @@
       <div class="blind-title-group">
         <p class="blind-kicker">Jellyfin music game</p>
         <h1>Blind Test</h1>
-        <p class="blind-page-subtitle">The song is playing. Enter the title and/or artist before the timer ends.</p>
+        <p class="blind-page-subtitle">Enter the title and/or artist before the timer ends.</p>
       </div>
       <div class="blind-heading-actions">
         <a class="blind-settings-link" id="settings-link" href="#/configurationpage?name=JellyBlindTestSettings" hidden>Settings</a>
@@ -601,6 +601,7 @@
       const MAX_ANSWER_HISTORY = 50;
       const CROSSFADE_MILLISECONDS = 1500;
       const MAX_PICK_ATTEMPTS = 12;
+      const MAX_PLAYBACK_ATTEMPTS = 5;
       const MAX_POPULAR_ARTIST_PICK_ATTEMPTS = 40;
       const STUB_TAG = 'mdiscover-stub';
       const api = window.ApiClient ?? (window.parent !== window ? window.parent.ApiClient : null);
@@ -1421,46 +1422,71 @@
         updateRoundCounter(true);
 
         try {
-          const selectedTrack = await chooseRandomTrack();
-          if (!sessionActive || roundSessionId !== sessionId) return;
-          const track = await loadTrackDetails(selectedTrack);
-          if (!sessionActive || roundSessionId !== sessionId) return;
-          currentTrack = track;
-          round++;
-          roundResults[round - 1] = {
-            title: currentTrack.Name,
-            artist: getArtistLabels(currentTrack).join(', '),
-            artworkCandidates: getArtworkCandidates(currentTrack),
-            submittedAnswers: [],
-            songMatched: false,
-            artistMatched: false,
-          };
-          answerInput.value = '';
-          stageTitle.textContent = 'Guess the song or artist';
-          stageCopy.textContent = '';
-          setResult('');
-          updateRoundCounter();
+          let lastPlaybackError = null;
+          for (let attempt = 0; attempt < MAX_PLAYBACK_ATTEMPTS; attempt++) {
+            const selectedTrack = await chooseRandomTrack();
+            if (!sessionActive || roundSessionId !== sessionId) return;
 
-          const streamUrl = api.getUrl('Audio/' + encodeURIComponent(currentTrack.Id) + '/stream', {
-            api_key: api.accessToken(),
-            static: true,
-          });
-          const incomingAudio = activeAudio === audioPlayers[0] ? audioPlayers[1] : audioPlayers[0];
-          incomingAudio.pause();
-          incomingAudio.removeAttribute('src');
-          incomingAudio.load();
-          incomingAudio.src = streamUrl;
-          incomingAudio.loop = true;
-          incomingAudio.volume = activeAudio.paused || activeAudio.ended ? musicVolume : 0;
-          incomingAudio.dataset.jellyBlindTestSession = String(roundSessionId);
-          await incomingAudio.play();
-          if (!sessionActive || roundSessionId !== sessionId) {
-            if (incomingAudio.dataset.jellyBlindTestSession === String(roundSessionId)) incomingAudio.pause();
-            return;
+            let incomingAudio = null;
+            try {
+              const track = await loadTrackDetails(selectedTrack);
+              if (!sessionActive || roundSessionId !== sessionId) return;
+
+              const streamUrl = api.getUrl('Audio/' + encodeURIComponent(track.Id) + '/stream', {
+                api_key: api.accessToken(),
+                static: true,
+              });
+              incomingAudio = activeAudio === audioPlayers[0] ? audioPlayers[1] : audioPlayers[0];
+              incomingAudio.pause();
+              incomingAudio.removeAttribute('src');
+              incomingAudio.load();
+              incomingAudio.src = streamUrl;
+              incomingAudio.loop = true;
+              incomingAudio.volume = activeAudio.paused || activeAudio.ended ? musicVolume : 0;
+              incomingAudio.dataset.jellyBlindTestSession = String(roundSessionId);
+              await incomingAudio.play();
+              if (!sessionActive || roundSessionId !== sessionId) {
+                if (incomingAudio.dataset.jellyBlindTestSession === String(roundSessionId)) incomingAudio.pause();
+                return;
+              }
+
+              currentTrack = track;
+              round++;
+              roundResults[round - 1] = {
+                title: currentTrack.Name,
+                artist: getArtistLabels(currentTrack).join(', '),
+                artworkCandidates: getArtworkCandidates(currentTrack),
+                submittedAnswers: [],
+                songMatched: false,
+                artistMatched: false,
+              };
+              answerInput.value = '';
+              stageTitle.textContent = 'Guess the song or artist';
+              stageCopy.textContent = '';
+              setResult('');
+              updateRoundCounter();
+              crossfadeTo(incomingAudio);
+              answerInput.focus();
+              startCountdown('Guessing', guessingSeconds, () => beginRevealPhase(!submitted, roundSessionId));
+              return;
+            } catch (error) {
+              if (!sessionActive || roundSessionId !== sessionId) return;
+              lastPlaybackError = error;
+              if (incomingAudio) {
+                incomingAudio.pause();
+                incomingAudio.removeAttribute('src');
+                incomingAudio.load();
+                incomingAudio.volume = musicVolume;
+              }
+              stageTitle.textContent = 'Skipping unavailable song';
+              stageCopy.textContent = 'Trying another song.';
+              setResult('This song could not be played. Finding another…');
+            }
           }
-          crossfadeTo(incomingAudio);
-          answerInput.focus();
-          startCountdown('Guessing', guessingSeconds, () => beginRevealPhase(!submitted, roundSessionId));
+
+          throw new Error(lastPlaybackError
+            ? 'Could not play a song after several attempts. Try another source or check the audio stream.'
+            : 'Could not find a playable song. Try another source.');
         } catch (error) {
           if (!sessionActive || roundSessionId !== sessionId) return;
           sessionActive = false;

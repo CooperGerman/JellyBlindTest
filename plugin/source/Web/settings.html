@@ -95,8 +95,14 @@
       async function checkPluginIntegrations() {
         let plugins = [];
         try {
-          const response = await ApiClient.getPlugins();
-          plugins = Array.isArray(response) ? response : response?.Items ?? response?.items ?? [];
+          const response = await ApiClient.ajax({
+            type: 'GET',
+            url: ApiClient.getUrl('Plugins'),
+            dataType: 'json',
+          });
+          plugins = Array.isArray(response)
+            ? response
+            : response?.Items ?? response?.items ?? response?.Plugins ?? response?.plugins ?? [];
         } catch (_) {
           Object.keys(integrationRows).forEach(name => setIntegrationStatus(name, 'Could not check plugin status', true));
           return false;
