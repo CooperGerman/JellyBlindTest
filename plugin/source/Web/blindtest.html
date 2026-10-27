@@ -181,10 +181,14 @@
 
     #JellyBlindTestPage .blind-match-badges {
       display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 8px;
-      margin-top: 12px;
+      position: absolute;
+      z-index: 2;
+      top: 12px;
+      left: 12px;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 6px;
+      margin: 0;
     }
     #JellyBlindTestPage .blind-match-badges[hidden] { display: none; }
     #JellyBlindTestPage .blind-match-badge {
@@ -310,6 +314,23 @@
     }
 
     #JellyBlindTestPage .blind-source-label { color: var(--blind-muted); font-size: 14px; }
+    #JellyBlindTestPage .blind-source-config {
+      display: flex;
+      flex: 1 1 100%;
+      flex-wrap: wrap;
+      align-items: end;
+      gap: 10px;
+      margin: 0;
+      padding: 0;
+      border: 0;
+    }
+    #JellyBlindTestPage .blind-source-field {
+      display: grid;
+      min-width: min(190px, 100%);
+      gap: 5px;
+      color: var(--blind-muted);
+      font-size: 12px;
+    }
     #JellyBlindTestPage .blind-source-select {
       min-width: min(280px, 100%);
       min-height: 44px;
@@ -319,6 +340,42 @@
       color: var(--blind-text);
       background: var(--blind-bg);
       font: inherit;
+    }
+    #JellyBlindTestPage .blind-source-field input {
+      min-width: 180px;
+      min-height: 44px;
+      padding: 9px 12px;
+      border: 1px solid var(--blind-line);
+      border-radius: 5px;
+      color: var(--blind-text);
+      background: var(--blind-bg);
+      font: inherit;
+    }
+    #JellyBlindTestPage .blind-genre-picker {
+      display: flex;
+      flex: 1 1 100%;
+      flex-wrap: wrap;
+      align-items: end;
+      gap: 8px;
+    }
+    #JellyBlindTestPage .blind-genre-picker[hidden] { display: none; }
+    #JellyBlindTestPage .blind-selected-genres {
+      display: flex;
+      flex: 1 1 100%;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+    #JellyBlindTestPage .blind-selected-genres:empty { display: none; }
+    #JellyBlindTestPage .blind-selected-genres button {
+      padding: 4px 8px;
+      border: 1px solid var(--blind-line);
+      border-radius: 4px;
+      color: var(--blind-text);
+      background: var(--blind-panel);
+      cursor: pointer;
     }
     #JellyBlindTestPage .blind-source-warning {
       flex: 1 1 100%;
@@ -507,12 +564,40 @@
         </div>
 
         <div class="blind-actions">
-          <label class="blind-source-label" for="source-select">Play from</label>
-          <select class="blind-source-select" id="source-select" aria-label="Choose a music source">
-            <option value="library">Whole library</option>
-            <option value="popular" hidden>Most popular artists (top 500)</option>
-            <option value="top-ranked" hidden>Highest-ranked songs (top 500)</option>
-          </select>
+          <fieldset class="blind-source-config" id="source-config">
+            <label class="blind-source-field" for="source-select">Mode
+              <select class="blind-source-select" id="source-select" aria-label="Choose a mode">
+                <option value="popular" hidden>Most popular</option>
+                <option value="playlist">Playlist</option>
+                <option value="expert" selected>Expert</option>
+              </select>
+            </label>
+            <label class="blind-source-field" id="source-variant-field" for="source-variant">Strategy
+              <select class="blind-source-select" id="source-variant" aria-label="Choose a strategy">
+                <option value="artist">Artist</option>
+                <option value="all">All songs</option>
+                <option value="by-artist">By artist</option>
+                <option value="by-genre">By genre</option>
+              </select>
+            </label>
+            <label class="blind-source-field" id="playlist-field" for="playlist-select" hidden>Playlist
+              <select class="blind-source-select" id="playlist-select" aria-label="Choose a playlist">
+                <option value="">Choose a playlist</option>
+              </select>
+            </label>
+            <label class="blind-source-field" id="artist-filter-field" for="artist-filter" hidden>Artist
+              <input id="artist-filter" type="search" list="artist-suggestions" autocomplete="off" placeholder="Search artists">
+              <datalist id="artist-suggestions"></datalist>
+            </label>
+            <div class="blind-genre-picker" id="genre-filter-field" hidden>
+              <label class="blind-source-field" for="genre-filter">Genres
+                <input id="genre-filter" type="search" list="genre-suggestions" autocomplete="off" placeholder="Search genres">
+                <datalist id="genre-suggestions"></datalist>
+              </label>
+              <button class="blind-button" id="add-genre-button" type="button">Add genre</button>
+              <ul class="blind-selected-genres" id="selected-genres" aria-label="Selected genres"></ul>
+            </div>
+          </fieldset>
           <button class="blind-button primary" id="start-button" type="button">Start test</button>
           <p class="blind-source-warning" id="source-warning" role="status" hidden></p>
           <details class="blind-session-settings">
@@ -622,8 +707,20 @@
       const roundHeading = document.getElementById('round-heading');
       const scoreTotalLabel = document.getElementById('score-total');
       const sourceSelect = document.getElementById('source-select');
+      const sourceConfig = document.getElementById('source-config');
       const popularSourceOption = sourceSelect.querySelector('option[value="popular"]');
-      const topRankedSourceOption = sourceSelect.querySelector('option[value="top-ranked"]');
+      const sourceVariantField = document.getElementById('source-variant-field');
+      const sourceVariantSelect = document.getElementById('source-variant');
+      const playlistField = document.getElementById('playlist-field');
+      const playlistSelect = document.getElementById('playlist-select');
+      const artistFilterField = document.getElementById('artist-filter-field');
+      const artistFilterInput = document.getElementById('artist-filter');
+      const artistSuggestions = document.getElementById('artist-suggestions');
+      const genreFilterField = document.getElementById('genre-filter-field');
+      const genreFilterInput = document.getElementById('genre-filter');
+      const genreSuggestions = document.getElementById('genre-suggestions');
+      const addGenreButton = document.getElementById('add-genre-button');
+      const selectedGenresList = document.getElementById('selected-genres');
       const sourceWarning = document.getElementById('source-warning');
       const sessionSettingsFields = document.getElementById('session-settings-fields');
       const sessionRoundsInput = document.getElementById('session-round-count');
@@ -649,7 +746,17 @@
       let guessingSeconds = DEFAULT_GUESSING_SECONDS;
       let popularTrackPoolSize = DEFAULT_POPULAR_TRACK_POOL_SIZE;
       let popularityModeEnabled = false;
+      let popularityProviderAvailable = false;
       let revealSeconds = DEFAULT_REVEAL_SECONDS;
+      let selectedArtist = null;
+      let artistChoices = [];
+      let genreChoices = [];
+      let selectedGenres = [];
+      let catalogSearchTimers = { Artists: 0, Genres: 0 };
+      let catalogSearchRequests = { Artists: 0, Genres: 0 };
+      let libraryArtistCount = null;
+      let popularGenreMatches = null;
+      let popularGenreMatchesKey = '';
       let currentTrack = null;
       let round = 0;
       let score = 0;
@@ -667,6 +774,7 @@
       let popularTracks = null;
       const usedIds = new Set();
       const usedPopularArtists = new Set();
+      const usedExpertArtists = new Set();
       const answerHistory = [];
       let answerHistoryIndex = 0;
       let answerHistoryDraft = '';
@@ -704,7 +812,7 @@
         albumArt.removeAttribute('src');
         startButton.hidden = false;
         startButton.textContent = 'Start test';
-        sourceSelect.disabled = false;
+        sourceConfig.disabled = false;
         sessionSettingsFields.disabled = false;
         stageTitle.textContent = 'Session aborted';
         stageCopy.textContent = 'The session stopped when you left Blind Test.';
@@ -778,6 +886,10 @@
           .toLocaleLowerCase()
           .replace(/[^\p{L}\p{N}]+/gu, ' ')
           .trim();
+      }
+
+      function normalizeItemId(value) {
+        return String(value ?? '').replaceAll('-', '').toLowerCase();
       }
 
       function compareVersions(left, right) {
@@ -955,7 +1067,7 @@
           setResult('Using default game settings.', 'error');
         }
 
-        let providerAvailable = false;
+        popularityProviderAvailable = false;
         if (popularityModeEnabled) {
           try {
             const status = await api.ajax({
@@ -963,47 +1075,150 @@
               url: api.getUrl('mdiscover/popularity/status'),
               dataType: 'json',
             });
-            providerAvailable = compareVersions(status?.version ?? status?.Version, '0.1.15.0') > 0;
+            popularityProviderAvailable = compareVersions(status?.version ?? status?.Version, '0.1.15.0') > 0;
           } catch (_) {}
         }
-        popularSourceOption.hidden = !(popularityModeEnabled && providerAvailable);
-        topRankedSourceOption.hidden = popularSourceOption.hidden;
-        sessionRankPoolSetting.hidden = popularSourceOption.hidden;
-        popularSourceOption.textContent = 'Most popular artists (top ' + popularTrackPoolSize + ')';
-        topRankedSourceOption.textContent = 'Highest-ranked songs (top ' + popularTrackPoolSize + ')';
-        if (popularSourceOption.hidden && ['popular', 'top-ranked'].includes(sourceSelect.value)) sourceSelect.value = 'library';
+        popularSourceOption.hidden = !(popularityModeEnabled && popularityProviderAvailable);
+        if (popularSourceOption.hidden && sourceSelect.value === 'popular') sourceSelect.value = 'expert';
 
         updateRoundCounter();
         populateSessionSettings();
+        updateModeConfigurator();
+      }
+
+      function updateModeConfigurator() {
+        const mode = sourceSelect.value;
+        const previousVariant = sourceVariantSelect.value;
+        const variants = [
+          { value: 'artist', label: mode === 'popular' ? 'Artist-balanced' : 'Random artist' },
+          { value: 'all', label: 'All songs' },
+          { value: 'by-artist', label: 'By artist' },
+          { value: 'by-genre', label: 'By genre' },
+        ];
+        sourceVariantSelect.replaceChildren(...variants.map(variant => {
+          const option = document.createElement('option');
+          option.value = variant.value;
+          option.textContent = variant.label;
+          return option;
+        }));
+        sourceVariantSelect.value = variants.some(variant => variant.value === previousVariant)
+          ? previousVariant
+          : 'artist';
+        sourceVariantField.hidden = mode === 'playlist';
+        playlistField.hidden = mode !== 'playlist';
+        artistFilterField.hidden = mode === 'playlist' || sourceVariantSelect.value !== 'by-artist';
+        genreFilterField.hidden = mode === 'playlist' || sourceVariantSelect.value !== 'by-genre';
+        sessionRankPoolSetting.hidden = mode !== 'popular' || !popularityProviderAvailable;
         updateSourceWarning();
       }
 
       function updateSourceWarning() {
-        const selectedOption = sourceSelect.selectedOptions[0];
-        if (sourceSelect.value === 'popular') {
+        const mode = sourceSelect.value;
+        const variant = sourceVariantSelect.value;
+        let message = '';
+        if (mode === 'popular') {
+          if (variant === 'artist') message = 'Artists are selected evenly; their songs are weighted by Deezer rank within the top ' + popularTrackPoolSize + '.';
+          else if (variant === 'all') message = 'Songs are weighted by Deezer rank across the top ' + popularTrackPoolSize + '.';
+          else if (variant === 'by-artist' && !selectedArtist) message = 'Search for and select an artist to continue.';
+          else if (variant === 'by-genre' && selectedGenres.length === 0) message = 'Add one or more genres to continue.';
+        } else if (mode === 'playlist') {
+          const playlist = playlistSelect.selectedOptions[0];
+          if (!playlistSelect.value) message = 'Choose a playlist to continue.';
+          else {
+            const songCount = Number(playlist.dataset.songCount);
+            if (Number.isFinite(songCount) && songCount < totalRounds) {
+              message = songCount < 1
+                ? 'This playlist has no songs available.'
+                : 'This playlist has ' + songCount + ' song' + (songCount === 1 ? '' : 's') + ' for ' + totalRounds + ' rounds; songs may repeat.';
+            }
+          }
+        } else if (variant === 'artist') message = 'A random artist will be selected from your library.';
+        else if (variant === 'by-artist' && !selectedArtist) message = 'Search for and select an artist to continue.';
+        else if (variant === 'by-genre' && selectedGenres.length === 0) message = 'Add one or more genres to continue.';
+
+        sourceWarning.textContent = message;
+        sourceWarning.hidden = !message;
+        const needsArtist = mode !== 'playlist' && variant === 'by-artist';
+        const needsGenres = mode !== 'playlist' && variant === 'by-genre';
+        const selectedPlaylist = playlistSelect.selectedOptions[0];
+        const selectedPlaylistCount = Number(selectedPlaylist?.dataset.songCount);
+        return !((mode === 'popular' && !popularityProviderAvailable)
+          || (mode === 'playlist' && !playlistSelect.value)
+          || (mode === 'playlist' && Number.isFinite(selectedPlaylistCount) && selectedPlaylistCount < 1)
+          || (needsArtist && !selectedArtist)
+          || (needsGenres && selectedGenres.length === 0));
+      }
+
+      function searchCatalog(type, input, datalist) {
+        window.clearTimeout(catalogSearchTimers[type]);
+        const requestId = ++catalogSearchRequests[type];
+        const query = input.value.trim();
+        if (query.length < 2 || !api) {
+          datalist.replaceChildren();
+          if (type === 'Artists') artistChoices = [];
+          else genreChoices = [];
+          return;
+        }
+
+        catalogSearchTimers[type] = window.setTimeout(async () => {
+          try {
+            const response = await api.ajax({
+              type: 'GET',
+              url: api.getUrl(type, {
+                userId: api.getCurrentUserId(),
+                SearchTerm: query,
+                Limit: 30,
+                Recursive: true,
+                SortBy: 'SortName',
+              }),
+              dataType: 'json',
+            });
+            if (requestId !== catalogSearchRequests[type]) return;
+            const items = (Array.isArray(response) ? response : response?.Items ?? response?.items ?? [])
+              .filter(item => item?.Id && item?.Name);
+            if (type === 'Artists') artistChoices = items;
+            else genreChoices = items;
+            datalist.replaceChildren(...items.map(item => {
+              const option = document.createElement('option');
+              option.value = item.Name;
+              return option;
+            }));
+          } catch (_) {
+            if (requestId === catalogSearchRequests[type]) datalist.replaceChildren();
+          }
+        }, 250);
+      }
+
+      function renderSelectedGenres() {
+        selectedGenresList.replaceChildren(...selectedGenres.map((genre, index) => {
+          const item = document.createElement('li');
+          const removeButton = document.createElement('button');
+          removeButton.type = 'button';
+          removeButton.textContent = genre.Name + ' ×';
+          removeButton.setAttribute('aria-label', 'Remove genre ' + genre.Name);
+          removeButton.addEventListener('click', () => {
+            selectedGenres.splice(index, 1);
+            resetSourceSampling();
+            renderSelectedGenres();
+            updateSourceWarning();
+          });
+          item.append(removeButton);
+          return item;
+        }));
+      }
+
+      function addSelectedGenre() {
+        const genre = genreChoices.find(candidate => normalizeAnswer(candidate.Name) === normalizeAnswer(genreFilterInput.value));
+        if (!genre) {
+          sourceWarning.textContent = 'Choose a genre from the search suggestions.';
           sourceWarning.hidden = false;
-          sourceWarning.textContent = 'Artists are balanced; songs are weighted by Deezer rank within the global top ' + popularTrackPoolSize + '. Run Music Discovery\'s popularity scan if needed.';
           return;
         }
-
-        if (sourceSelect.value === 'top-ranked') {
-          sourceWarning.hidden = false;
-          sourceWarning.textContent = 'Songs are weighted by Deezer rank across the global top ' + popularTrackPoolSize + '; artists are not balanced.';
-          return;
-        }
-
-        const songCountValue = selectedOption?.dataset.songCount;
-        const songCount = songCountValue ? Number(songCountValue) : Number.NaN;
-        if (sourceSelect.value === 'library' || !Number.isFinite(songCount) || songCount >= totalRounds) {
-          sourceWarning.hidden = true;
-          sourceWarning.textContent = '';
-          return;
-        }
-
-        sourceWarning.hidden = false;
-        sourceWarning.textContent = songCount < 1
-          ? 'This playlist has no songs available.'
-          : 'This playlist has ' + songCount + ' song' + (songCount === 1 ? '' : 's') + ' for ' + totalRounds + ' rounds; songs may repeat.';
+        if (!selectedGenres.some(candidate => candidate.Id === genre.Id)) selectedGenres.push(genre);
+        genreFilterInput.value = '';
+        resetSourceSampling();
+        renderSelectedGenres();
+        updateSourceWarning();
       }
 
       function populateSessionSettings() {
@@ -1045,7 +1260,7 @@
             option.value = playlist.Id;
             option.textContent = playlist.Name;
             option.dataset.songCount = String(playlist.ChildCount ?? playlist.RecursiveItemCount ?? '');
-            sourceSelect.append(option);
+            playlistSelect.append(option);
           });
           updateSourceWarning();
         } catch (_) {
@@ -1181,7 +1396,7 @@
         startButton.textContent = 'Play again';
         updateRoundCounter();
         setResult('');
-        sourceSelect.disabled = false;
+        sourceConfig.disabled = false;
         sessionSettingsFields.disabled = false;
         answerInput.focus();
       }
@@ -1302,7 +1517,7 @@
           const artists = [...groups.values()];
           const artistGroup = artists[Math.floor(Math.random() * artists.length)];
           usedPopularArtists.add(artistGroup.key);
-          const candidates = artistGroup.tracks.filter(track => !usedIds.has(track.itemId ?? track.ItemId));
+          const candidates = artistGroup.tracks.filter(track => !usedIds.has(normalizeItemId(track.itemId ?? track.ItemId)));
           if (candidates.length === 0) continue;
 
           const selected = chooseWeightedTrack(candidates);
@@ -1311,7 +1526,7 @@
           try {
             const item = await api.getItem(userId, itemId);
             if (!item?.Id) continue;
-            usedIds.add(item.Id);
+            usedIds.add(normalizeItemId(item.Id));
             return item;
           } catch (_) {
             continue;
@@ -1330,7 +1545,7 @@
         }
         if (usedIds.size >= totalCount) usedIds.clear();
 
-        const candidates = popularTracks.filter(track => !usedIds.has(track.itemId ?? track.ItemId));
+        const candidates = popularTracks.filter(track => !usedIds.has(normalizeItemId(track.itemId ?? track.ItemId)));
         while (candidates.length) {
           const selected = chooseWeightedTrack(candidates);
           candidates.splice(candidates.indexOf(selected), 1);
@@ -1338,7 +1553,7 @@
           try {
             const item = await api.getItem(userId, itemId);
             if (!item?.Id) continue;
-            usedIds.add(item.Id);
+            usedIds.add(normalizeItemId(item.Id));
             return item;
           } catch (_) {}
         }
@@ -1346,29 +1561,148 @@
         throw new Error('No cached top-ranked songs are available. Run Music Discovery\'s popularity scan or choose another source.');
       }
 
+      async function choosePopularArtistTrack(userId) {
+        const response = await api.ajax({
+          type: 'GET',
+          url: api.getUrl('mdiscover/popularity/artist', {
+            artist: selectedArtist.Name,
+            limit: 100,
+          }),
+          dataType: 'json',
+        });
+        const candidates = [...(response?.tracks ?? response?.Tracks ?? [])]
+          .filter(track => !usedIds.has(normalizeItemId(track.itemId ?? track.ItemId)));
+        while (candidates.length) {
+          const selected = chooseWeightedTrack(candidates);
+          candidates.splice(candidates.indexOf(selected), 1);
+          const itemId = selected.itemId ?? selected.ItemId;
+          try {
+            const item = await api.getItem(userId, itemId);
+            if (!item?.Id) continue;
+            usedIds.add(normalizeItemId(item.Id));
+            return item;
+          } catch (_) {}
+        }
+        throw new Error('No ranked songs are available for ' + selectedArtist.Name + '.');
+      }
+
+      async function choosePopularGenreTrack(userId) {
+        await loadPopularTracks();
+        const cacheKey = selectedGenres.map(genre => normalizeAnswer(genre.Name)).sort().join('|');
+        if (!popularGenreMatches || popularGenreMatchesKey !== cacheKey) {
+          const rankedIds = popularTracks.map(track => track.itemId ?? track.ItemId).filter(Boolean);
+          const matchingIds = new Set();
+          const selectedGenreNames = new Set(selectedGenres.map(genre => normalizeAnswer(genre.Name)));
+          for (let index = 0; index < rankedIds.length; index += 100) {
+            const response = await api.getItems(userId, {
+              Ids: rankedIds.slice(index, index + 100),
+              Limit: 100,
+              Fields: 'Genres',
+            });
+            (response?.Items ?? []).forEach(item => {
+              const genres = item.Genres ?? item.GenreItems?.map(genre => genre.Name) ?? [];
+              if (genres.some(genre => selectedGenreNames.has(normalizeAnswer(genre)))) matchingIds.add(normalizeItemId(item.Id));
+            });
+          }
+          popularGenreMatches = popularTracks.filter(track => matchingIds.has(normalizeItemId(track.itemId ?? track.ItemId)));
+          popularGenreMatchesKey = cacheKey;
+        }
+
+        const candidates = popularGenreMatches.filter(track => !usedIds.has(normalizeItemId(track.itemId ?? track.ItemId)));
+        while (candidates.length) {
+          const selected = chooseWeightedTrack(candidates);
+          candidates.splice(candidates.indexOf(selected), 1);
+          const itemId = selected.itemId ?? selected.ItemId;
+          try {
+            const item = await api.getItem(userId, itemId);
+            if (!item?.Id) continue;
+            usedIds.add(normalizeItemId(item.Id));
+            return item;
+          } catch (_) {}
+        }
+        throw new Error('No ranked songs were found for the selected genres.');
+      }
+
+      async function chooseLibraryArtist(userId) {
+        if (libraryArtistCount === null) {
+          const response = await api.ajax({
+            type: 'GET',
+            url: api.getUrl('Artists', {
+              userId,
+              Limit: 1,
+              EnableTotalRecordCount: true,
+              Recursive: true,
+            }),
+            dataType: 'json',
+          });
+          libraryArtistCount = Number(response?.TotalRecordCount ?? 0);
+        }
+        if (libraryArtistCount < 1) throw new Error('No artists are available in this library.');
+        if (usedExpertArtists.size >= libraryArtistCount) usedExpertArtists.clear();
+
+        for (let attempt = 0; attempt < MAX_POPULAR_ARTIST_PICK_ATTEMPTS; attempt++) {
+          const response = await api.ajax({
+            type: 'GET',
+            url: api.getUrl('Artists', {
+              userId,
+              StartIndex: Math.floor(Math.random() * libraryArtistCount),
+              Limit: 1,
+              Recursive: true,
+              SortBy: 'SortName',
+            }),
+            dataType: 'json',
+          });
+          const artist = response?.Items?.[0];
+          if (!artist?.Id || usedExpertArtists.has(artist.Id)) continue;
+          usedExpertArtists.add(artist.Id);
+          totalCount = null;
+          return artist;
+        }
+        usedExpertArtists.clear();
+        throw new Error('Could not find another artist in this library.');
+      }
+
       async function chooseRandomTrack() {
         const userId = api.getCurrentUserId();
-        const selectedSource = sourceSelect.value;
-        if (selectedSource === 'popular') return choosePopularTrack(userId);
-        if (selectedSource === 'top-ranked') return chooseTopRankedTrack(userId);
+        const mode = sourceSelect.value;
+        const variant = sourceVariantSelect.value;
+        if (mode === 'popular') {
+          if (variant === 'artist') return choosePopularTrack(userId);
+          if (variant === 'all') return chooseTopRankedTrack(userId);
+          if (variant === 'by-artist') return choosePopularArtistTrack(userId);
+          return choosePopularGenreTrack(userId);
+        }
+
+        let selectionFilters = {};
+        if (mode === 'expert') {
+          if (variant === 'artist') {
+            const artist = await chooseLibraryArtist(userId);
+            selectionFilters = { ArtistIds: [artist.Id] };
+          } else if (variant === 'by-artist') {
+            selectionFilters = { ArtistIds: [selectedArtist.Id] };
+          } else if (variant === 'by-genre') {
+            selectionFilters = { Genres: selectedGenres.map(genre => genre.Name) };
+          }
+        }
         const baseQuery = {
           IncludeItemTypes: 'Audio',
           Recursive: true,
           Limit: 1,
-          Fields: 'Tags,ImageTags,AlbumPrimaryImageTag,AlbumId,Album,AlbumArtist,Artists,AlbumArtists',
+          Fields: 'Tags,ImageTags,AlbumPrimaryImageTag,AlbumId,Album,AlbumArtist,Artists,AlbumArtists,ArtistItems,Genres',
         };
 
         async function getAudioItems(startIndex, enableTotalRecordCount) {
           const query = {
             ...baseQuery,
+            ...selectionFilters,
             EnableTotalRecordCount: enableTotalRecordCount,
             ...(startIndex === null ? {} : { StartIndex: startIndex }),
           };
-          if (selectedSource === 'library') return api.getItems(userId, query);
+          if (mode === 'expert') return api.getItems(userId, query);
 
           return api.ajax({
             type: 'GET',
-            url: api.getUrl('Playlists/' + encodeURIComponent(selectedSource) + '/Items', {
+            url: api.getUrl('Playlists/' + encodeURIComponent(playlistSelect.value) + '/Items', {
               userId,
               StartIndex: startIndex ?? 0,
               Limit: 1,
@@ -1384,20 +1718,18 @@
           totalCount = Number(countResponse?.TotalRecordCount ?? 0);
         }
 
-        if (totalCount < 1) {
-          throw new Error(selectedSource === 'library'
-            ? 'No songs are available in your Jellyfin library.'
-            : 'The selected playlist has no available songs.');
-        }
+        if (totalCount < 1) throw new Error(mode === 'playlist'
+          ? 'The selected playlist has no available songs.'
+          : 'No songs are available for this selection.');
         if (usedIds.size >= totalCount) usedIds.clear();
 
         for (let attempt = 0; attempt < MAX_PICK_ATTEMPTS; attempt++) {
           const startIndex = Math.floor(Math.random() * totalCount);
           const response = await getAudioItems(startIndex, false);
           const item = response?.Items?.[0];
-          if (!item?.Id || usedIds.has(item.Id)) continue;
+          if (!item?.Id || usedIds.has(normalizeItemId(item.Id))) continue;
           if ((item.Tags ?? []).includes(STUB_TAG)) continue;
-          usedIds.add(item.Id);
+          usedIds.add(normalizeItemId(item.Id));
           return item;
         }
 
@@ -1410,7 +1742,7 @@
         clearCountdown();
         submitted = false;
         roundRevealed = false;
-        sourceSelect.disabled = true;
+        sourceConfig.disabled = true;
         currentTrack = null;
         startButton.hidden = true;
         artworkContainer.hidden = true;
@@ -1494,7 +1826,7 @@
           requestInProgress = false;
           stopAudio();
           currentTrack = null;
-          sourceSelect.disabled = false;
+          sourceConfig.disabled = false;
           sessionSettingsFields.disabled = false;
           updateRoundCounter();
           stageTitle.textContent = 'Could not start this round';
@@ -1604,6 +1936,10 @@
       }
 
       startButton.addEventListener('click', () => {
+        if (!updateSourceWarning()) {
+          setResult(sourceWarning.textContent, 'error');
+          return;
+        }
         sessionId++;
         sessionActive = true;
         requestInProgress = false;
@@ -1617,7 +1953,9 @@
         resultsSummary.hidden = true;
         totalCount = null;
         popularTracks = null;
+        popularGenreMatches = null;
         usedPopularArtists.clear();
+        usedExpertArtists.clear();
         usedIds.clear();
         scoreLabel.textContent = '0';
         answerInput.focus();
@@ -1646,6 +1984,40 @@
       document.addEventListener('click', closeVolumeControlOnOutside);
       document.addEventListener('keydown', closeVolumeControlOnEscape);
 
+      function resetSourceSampling() {
+        totalCount = null;
+        usedIds.clear();
+        usedPopularArtists.clear();
+        usedExpertArtists.clear();
+        popularGenreMatches = null;
+      }
+
+      sourceSelect.addEventListener('change', () => {
+        resetSourceSampling();
+        updateModeConfigurator();
+      });
+      sourceVariantSelect.addEventListener('change', () => {
+        resetSourceSampling();
+        updateModeConfigurator();
+      });
+      playlistSelect.addEventListener('change', () => {
+        resetSourceSampling();
+        updateSourceWarning();
+      });
+      artistFilterInput.addEventListener('input', () => {
+        selectedArtist = null;
+        resetSourceSampling();
+        searchCatalog('Artists', artistFilterInput, artistSuggestions);
+        updateSourceWarning();
+      });
+      artistFilterInput.addEventListener('change', () => {
+        selectedArtist = artistChoices.find(artist => normalizeAnswer(artist.Name) === normalizeAnswer(artistFilterInput.value)) ?? null;
+        resetSourceSampling();
+        updateSourceWarning();
+      });
+      genreFilterInput.addEventListener('input', () => searchCatalog('Genres', genreFilterInput, genreSuggestions));
+      addGenreButton.addEventListener('click', addSelectedGenre);
+
       musicVolumeInput.addEventListener('input', () => {
         musicVolume = Number(musicVolumeInput.value) / 100;
         musicVolumeValue.value = Math.round(musicVolume * 100) + '%';
@@ -1656,7 +2028,6 @@
         }
       });
 
-      sourceSelect.addEventListener('change', updateSourceWarning);
       answerForm.addEventListener('keydown', navigateAnswerHistory);
       answerForm.addEventListener('submit', submitAnswer);
       audioPlayers.forEach(player => player.addEventListener('ended', () => player.pause()));
